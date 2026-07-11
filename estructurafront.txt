@@ -1,0 +1,96 @@
+Usuario:  admin@pronosticos.com 
+  • Contraseña:  password123 
+
+PARA METER LOS DATOS DE PRUEBA
+
+docker exec -i pronosticos_db psql -U pronosticos_user -d pronosticos_deportivos < seed_grandes_premios.sql
+
+PARA CORRER LOS CONTENEDORES
+
+docker compose up -d --build
+
+proyecto_f1_frontend/
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+├── index.html
+├── .env.example
+│
+└── src/
+    ├── main.tsx
+    ├── App.tsx                        # Rutas (React Router)
+    │
+    ├── core/
+    │   ├── api/
+    │   │   └── axiosClient.ts          # Instancia de Axios + interceptor JWT
+    │   ├── context/
+    │   │   ├── AuthContext.tsx         # Sesión (usuario, token)
+    │   │   └── AccesoContext.tsx       # Estado del pase + gp_gratis_id
+    │   ├── hooks/
+    │   │   ├── useAuth.ts
+    │   │   └── useAcceso.ts
+    │   └── guards/
+    │       ├── PrivateRoute.tsx        # Protege rutas que requieren login
+    │       └── AdminRoute.tsx          # Protege rutas de admin
+    │
+    ├── shared/
+    │   ├── components/
+    │   │   ├── Navbar.tsx
+    │   │   ├── Footer.tsx
+    │   │   ├── Button.tsx
+    │   │   ├── Card.tsx
+    │   │   └── Loader.tsx
+    │   └── Paywall.tsx                  # "Compra tu pase" reutilizable
+    │
+    └── features/
+        │
+        ├── auth/                       # EP-01
+        │   ├── pages/
+        │   │   ├── Login.tsx
+        │   │   ├── Registro.tsx
+        │   │   └── RecuperarPassword.tsx
+        │   └── services/
+        │       └── authService.ts       # llamadas a /auth/*
+        │
+        ├── perfil/                      # EP-02
+        │   ├── pages/
+        │   │   └── EditarPerfil.tsx
+        │   └── services/
+        │       └── perfilService.ts
+        │
+        ├── calendario/                   # EP-03
+        │   ├── pages/
+        │   │   ├── ListaGPs.tsx          # libre
+        │   │   └── DetalleGP.tsx         # protegido con <Paywall>
+        │   └── services/
+        │       └── calendarioService.ts
+        │
+        ├── competencia/                   # EP-04 (pilotos + escuderías)
+        │   ├── pages/
+        │   │   ├── Pilotos.tsx
+        │   │   └── Escuderias.tsx
+        │   └── services/
+        │       └── competenciaService.ts
+        │
+        ├── resultados/                     # EP-05
+        │   ├── pages/
+        │   │   ├── ResultadosGP.tsx
+        │   │   └── ClasificacionCampeonato.tsx
+        │   └── services/
+        │       └── resultadosService.ts
+        │
+        ├── admin/                            # EP-06
+        │   ├── pages/
+        │   │   ├── GestionGPs.tsx
+        │   │   ├── GestionPilotos.tsx
+        │   │   ├── GestionEscuderias.tsx
+        │   │   └── RegistrarResultados.tsx
+        │   └── services/
+        │       └── adminService.ts
+        │
+        └── acceso/                             # EP-07
+            ├── pages/
+            │   ├── Checkout.tsx
+            │   └── PagoExitoso.tsx
+            └── services/
+                └── pagosService.ts
