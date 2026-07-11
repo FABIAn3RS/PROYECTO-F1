@@ -28,8 +28,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./app:/app/app   # opcional: monta el código para ver cambios sin rebuild
-
+   
 volumes:
   pgdata:
