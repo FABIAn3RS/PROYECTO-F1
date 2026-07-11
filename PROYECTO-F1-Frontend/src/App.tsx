@@ -19,7 +19,6 @@ import GestionPilotos from './features/admin/pages/GestionPilotos';
 import GestionEscuderias from './features/admin/pages/GestionEscuderias';
 import RegistrarResultados from './features/admin/pages/RegistrarResultados';
 import Perfil from './features/perfil/pages/Perfil';
-import Equipos from './features/thesportsdb/pages/Equipos';
 
 function App() {
   return (
@@ -30,7 +29,6 @@ function App() {
         <Route path="/registro" element={<Registro />} />
         <Route path="/calendario" element={<ListaGPs />} />
         <Route path="/pilotos" element={<Pilotos />} />
-        <Route path="/equipos" element={<Equipos />} />
         <Route path="/escuderias" element={<Escuderias />} />
         <Route path="/resultados" element={<ResultadosIndex />} />
         <Route path="/resultados/clasificacion" element={<ClasificacionCampeonato />} />

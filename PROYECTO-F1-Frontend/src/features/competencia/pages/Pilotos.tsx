@@ -1,7 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import type { TheSportsDbPlayer } from '../../../models/theSportsDb';
-import { buscarPilotoF1 } from '../../thesportsdb/services/theSportsDbService';
+import { useEffect, useState } from 'react';
+import { listarPilotos, type PilotoConEscuderia } from '../services/competenciaService';
 import { getErrorMessage } from '../../../core/api/apiError';
 import Loader from '../../../shared/components/Loader';
 import Button from '../../../shared/components/Button';
@@ -9,90 +7,22 @@ import Card from '../../../shared/components/Card';
 
 export default function Pilotos() {
   const [busquedaPiloto, setBusquedaPiloto] = useState('');
-  const [resultados, setResultados] = useState<TheSportsDbPlayer[]>([]);
-  const [cargando, setCargando] = useState(false);
+  const [pilotos, setPilotos] = useState<PilotoConEscuderia[]>([]);
+  const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [buscado, setBuscado] = useState(false);
-
-  const buscarPilotos = async () => {
-    if (!busquedaPiloto.trim()) return;
-    setCargando(true);
-    setError(null);
-    setBuscado(true);
-
-    try {
-      const data = await buscarPilotoF1(busquedaPiloto);
-      setResultados(data);
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, 'No se pudo buscar el piloto.'));
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  return (
-    <div className="stack">
-      <div className="page-header">
-        <h1>Pilotos</h1>
-        <p>Busca pilotos de Fórmula 1 desde TheSportsDB.</p>
-      </div>
-
-      <div className="flex-between" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
-        <input
-          type="search"
-          placeholder="Buscar piloto (ej. Max Verstappen)"
-          value={busquedaPiloto}
-          onChange={(e) => setBusquedaPiloto(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && void buscarPilotos()}
-          style={{ flex: 1, minWidth: 220 }}
-        />
-        <Button variante="secondary" tamano="sm" onClick={() => void buscarPilotos()}>
-          Buscar
-        </Button>
-      </div>
-
-      {cargando && <Loader mensaje="Buscando pilotos..." />}
-      {error && <p className="form-error">{error}</p>}
-
-      {!cargando && !error && buscado && resultados.length === 0 && (
-        <div className="empty-state">
-          No se encontraron pilotos. Prueba con otro nombre o consulta los equipos en{' '}
-          <Link to="/equipos">Equipos</Link>.
-        </div>
-      )}
-
-      {!cargando && !error && !buscado && (
-        <div className="empty-state">
-          Busca un piloto por nombre o consulta la plantilla en la página de Equipos.
-        </div>
-      )}
-
-      {!cargando && !error && resultados.length > 0 && (
-        <div className="grid grid-2">
-          {resultados.map((piloto) => (
-            <Card key={piloto.idPlayer} className="f1-api-piloto">
-              <div className="f1-api-piloto__contenido">
-                {(piloto.strThumb || piloto.strCutout) && (
-                  <img
-                    src={piloto.strCutout ?? piloto.strThumb ?? ''}
-                    alt={piloto.strPlayer}
-                    className="f1-api-piloto__foto"
-                  />
-                )}
-                <div>
-                  <h3>{piloto.strPlayer}</h3>
-                  <p>{piloto.strTeam ?? 'Sin equipo'}</p>
-                  <p>
-                    {piloto.strNationality ?? '—'}
-                    {piloto.strNumber ? ` · #${piloto.strNumber}` : ''}
-                  </p>
-                  {piloto.dateBorn && <p>Nacimiento: {piloto.dateBorn}</p>}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+  useEffect(() => {
+    listarPilotos().then(setPilotos).catch((err: unknown) => setError(getErrorMessage(err, 'No se pudieron cargar los pilotos.'))).finally(() => setCargando(false));
+  }, []);
+  const visibles = pilotos.filter((p) => p.nombre.toLowerCase().includes(busquedaPiloto.trim().toLowerCase()));
+  return <div className="stack">
+    <div className="page-header"><h1>Pilotos</h1><p>Consulta los pilotos registrados para la temporada.</p></div>
+    <div className="flex-between" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
+      <input type="search" placeholder="Filtrar piloto (ej. Max Verstappen)" value={busquedaPiloto} onChange={(e) => setBusquedaPiloto(e.target.value)} style={{ flex: 1, minWidth: 220 }} />
+      <Button variante="secondary" tamano="sm" onClick={() => setBusquedaPiloto('')}>Limpiar</Button>
     </div>
-  );
+    {cargando && <Loader mensaje="Cargando pilotos..." />}
+    {error && <p className="form-error">{error}</p>}
+    {!cargando && !error && visibles.length === 0 && <div className="empty-state">No se encontraron pilotos.</div>}
+    {!cargando && !error && visibles.length > 0 && <div className="grid grid-2">{visibles.map((piloto) => <Card key={piloto.id}><h3>{piloto.nombre}</h3><p>{piloto.escuderia?.nombre ?? 'Sin escudería'}</p><p>{piloto.nacionalidad ?? '—'}{piloto.numero ? ` · #${piloto.numero}` : ''}</p></Card>)}</div>}
+  </div>;
 }

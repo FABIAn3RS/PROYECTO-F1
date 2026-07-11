@@ -12,6 +12,7 @@ from app.modules.pilotos.models import Piloto
 from app.modules.resultados.models import ResultadoOficial, ResultadoPosicion
 from app.modules.pronosticos.models import Pronostico
 from app.modules.admin import schemas
+from app.modules.admin.thesportsdb_sync import sincronizar_temporada
 
 # Import schema definitions from each module to reuse for return values
 from app.modules.calendario import schemas as cal_schemas
@@ -19,6 +20,24 @@ from app.modules.escuderias import schemas as esc_schemas
 from app.modules.pilotos import schemas as pil_schemas
 
 router = APIRouter(prefix="/admin", tags=["Administración (Protegido)"])
+
+
+@router.post("/sincronizaciones/thesportsdb")
+def sincronizar_datos_thesportsdb(
+    temporada: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin),
+):
+    """Importa manualmente datos de F1 sin modificar el contenido ya administrado."""
+    try:
+        resumen = sincronizar_temporada(db, temporada)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="No se pudo sincronizar con TheSportsDB. Inténtalo nuevamente.",
+        ) from exc
+    return {"detail": "Sincronización completada.", **resumen}
 
 
 # ==========================================

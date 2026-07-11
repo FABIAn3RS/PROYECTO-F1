@@ -35,6 +35,22 @@ export async function eliminarGP(id: string): Promise<void> {
   await axiosClient.delete(`/admin/grandes-premios/${id}`);
 }
 
+export interface SincronizacionTheSportsDb {
+  detail: string;
+  grandes_premios: number;
+  escuderias: number;
+  pilotos: number;
+}
+
+export async function sincronizarTheSportsDb(temporada: number): Promise<SincronizacionTheSportsDb> {
+  const { data } = await axiosClient.post<SincronizacionTheSportsDb>(
+    '/admin/sincronizaciones/thesportsdb',
+    undefined,
+    { params: { temporada } },
+  );
+  return data;
+}
+
 // ==========================================
 // Escuderías
 // ==========================================
