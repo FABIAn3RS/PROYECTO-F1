@@ -24,12 +24,10 @@ services:
     restart: unless-stopped
     env_file: .env 
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./app:/app/app   # opcional: monta el código para ver cambios sin rebuild
-
+   
 volumes:
   pgdata:
