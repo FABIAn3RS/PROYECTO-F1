@@ -2,7 +2,7 @@ name: 'Build and Deploy to Cloud Run'
 on:
   push:
     branches:
-      - 'master'   # <- cambia a 'main' si esa es tu rama principal
+      - 'FRONT'
 
 env:
   PROJECT_ID: 'pronosticos-f1'
