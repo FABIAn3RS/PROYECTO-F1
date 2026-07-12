@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Vite dev server",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "npm: dev",
+      "url": "http://localhost:5173/"
+    }
+  ]
+}
