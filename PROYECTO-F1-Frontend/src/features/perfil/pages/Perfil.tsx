@@ -3,6 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../core/hooks/useAuth';
 import Card from '../../../shared/components/Card';
 import Button from '../../../shared/components/Button';
+import { auth } from '../../../core/firebase/firebaseConfig';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import type { ConfirmationResult } from 'firebase/auth';
 import type { PaseTemporadaInfo } from '../services/perfilService';
 import {
   verificarTelefono,
@@ -10,13 +13,18 @@ import {
   crearCheckoutSession,
   simularPagoExitoso,
   simularWebhookKyc,
-  obtenerPase
+  obtenerPase,
+  eliminarCuenta
 } from '../services/perfilService';
 
 export default function Perfil() {
   const { usuario, cerrarSesion, refrescarPerfil } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Firebase Auth states
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Estados de carga e interfaz
   const [telefono, setTelefono] = useState('');
@@ -25,12 +33,33 @@ export default function Perfil() {
   const [cargandoTelefono, setCargandoTelefono] = useState(false);
   const [cargandoKyc, setCargandoKyc] = useState(false);
   const [cargandoCheckout, setCargandoCheckout] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Datos del Pase de Temporada
   const [pase, setPase] = useState<PaseTemporadaInfo | null>(null);
   const [cargandoPase, setCargandoPase] = useState(true);
+
+  // Inicializar Recaptcha invisible de Firebase
+  useEffect(() => {
+    if (!usuario) return;
+    try {
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solucionado
+        }
+      });
+      setRecaptchaVerifier(verifier);
+
+      return () => {
+        verifier.clear();
+      };
+    } catch (err) {
+      console.error('Error initializing recaptcha verifier:', err);
+    }
+  }, [usuario]);
 
   // Cargar estado de Pase de Temporada
   useEffect(() => {
@@ -58,7 +87,6 @@ export default function Perfil() {
           console.error(err);
         })
         .finally(() => {
-          // Limpiar parámetros de búsqueda de la URL
           setSearchParams({});
         });
     }
@@ -71,49 +99,75 @@ export default function Perfil() {
     navigate('/login', { replace: true });
   }
 
-  // Flujo 1: Enviar Código SMS de Prueba
-  function enviarCodigoSMS() {
+  // Flujo 1: Enviar Código SMS Real con Firebase
+  async function enviarCodigoSMS() {
     if (!telefono || telefono.length < 7) {
       setErrorMsg('Por favor, ingresa un número de teléfono válido.');
       return;
     }
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    setCargandoTelefono(true);
-
-    // Simulamos el envío de SMS por Firebase
-    setTimeout(() => {
-      setSmsEnviado(true);
-      setSuccessMsg('Código de verificación SMS enviado (Código simulación: 123456).');
-      setCargandoTelefono(false);
-    }, 1000);
-  }
-
-  // Flujo 2: Validar Código SMS
-  async function confirmarSMS() {
-    if (codigoSMS !== '123456') {
-      setErrorMsg('Código SMS inválido. Intenta con "123456".');
+    if (!recaptchaVerifier) {
+      setErrorMsg('El sistema de verificación (reCAPTCHA) no está listo. Recarga la página.');
       return;
     }
+
     setErrorMsg(null);
     setSuccessMsg(null);
     setCargandoTelefono(true);
 
     try {
-      await verificarTelefono(telefono, 'firebase_mock_token_123456');
-      setSuccessMsg('¡Teléfono verificado correctamente!');
-      setSmsEnviado(false);
-      setTelefono('');
-      setCodigoSMS('');
-      await refrescarPerfil();
+      // Normalizar formato E.164 (ej: +573001234567 o +34600000000)
+      const formatPhone = telefono.startsWith('+') ? telefono.trim() : `+${telefono.replace(/[\s()-]+/g, '')}`;
+      const result = await signInWithPhoneNumber(auth, formatPhone, recaptchaVerifier);
+      setConfirmationResult(result);
+      setSmsEnviado(true);
+      setSuccessMsg('Código de verificación SMS enviado por Firebase.');
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.detail ?? 'Error al verificar teléfono.');
+      console.error(err);
+      setErrorMsg(
+        'Error al enviar el SMS. Asegúrate de incluir el código de país (ejemplo: +573001234567).'
+      );
     } finally {
       setCargandoTelefono(false);
     }
   }
 
-  // Flujo 3: Iniciar KYC con Didit
+  // Flujo 2: Validar Código SMS Real con Firebase
+  async function confirmarSMS() {
+    if (!codigoSMS || codigoSMS.length !== 6) {
+      setErrorMsg('Por favor, ingresa el código de 6 dígitos.');
+      return;
+    }
+    if (!confirmationResult) {
+      setErrorMsg('Sesión de verificación no encontrada. Intenta enviar el SMS nuevamente.');
+      return;
+    }
+
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setCargandoTelefono(true);
+
+    try {
+      // Confirmar el código SMS en Firebase
+      const result = await confirmationResult.confirm(codigoSMS);
+      const firebaseToken = await result.user.getIdToken();
+
+      // Enviar el token y el teléfono al backend
+      await verificarTelefono(telefono, firebaseToken);
+      setSuccessMsg('¡Teléfono verificado correctamente con Firebase!');
+      setSmsEnviado(false);
+      setTelefono('');
+      setCodigoSMS('');
+      setConfirmationResult(null);
+      await refrescarPerfil();
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg('Código de verificación SMS incorrecto o expirado.');
+    } finally {
+      setCargandoTelefono(false);
+    }
+  }
+
+  // Flujo 3: Iniciar KYC Real con Didit
   async function iniciarKyc() {
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -121,11 +175,12 @@ export default function Perfil() {
 
     try {
       const session = await iniciarKycSession();
-      setSuccessMsg('Abriendo pantalla de verificación KYC...');
-      // En producción esto abre la pasarela de Didit, en sandbox la mockeamos.
+      setSuccessMsg('Abriendo pestaña externa de validación de identidad (Didit)...');
       window.open(session.session_url, '_blank');
-      // Simulamos que el webhook está en progreso
-      await refrescarPerfil();
+      // Refrescar perfil para ver si el webhook ya resolvió en paralelo
+      setTimeout(() => {
+        refrescarPerfil().catch(console.error);
+      }, 5000);
     } catch (err: any) {
       setErrorMsg(err.response?.data?.detail ?? 'Error al iniciar KYC.');
     } finally {
@@ -133,7 +188,7 @@ export default function Perfil() {
     }
   }
 
-  // Flujo 4: Simular webhook Didit (Sólo para desarrollo / testing)
+  // Flujo 4: Simular webhook Didit (Para pruebas / testing rápido en sandbox)
   async function simularWebhookAprobacion() {
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -166,13 +221,31 @@ export default function Perfil() {
 
     try {
       const sesion = await crearCheckoutSession(successUrl, cancelUrl);
-      setSuccessMsg('Redirigiendo a la pasarela de pago...');
-      // Redirigir a Stripe (o URL de simulación en sandbox)
+      setSuccessMsg('Redirigiendo a la pasarela de pago de Stripe...');
       window.location.href = sesion.checkout_url;
     } catch (err: any) {
       setErrorMsg(err.response?.data?.detail ?? 'Error al crear la sesión de pago.');
     } finally {
       setCargandoCheckout(false);
+    }
+  }
+
+  // Eliminar mi cuenta (Para facilitar pruebas de registro)
+  async function manejarEliminarCuenta() {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar tu cuenta permanentemente para volver a probar desde el registro?')) {
+      return;
+    }
+    setEliminando(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      await eliminarCuenta();
+      alert('Tu cuenta ha sido eliminada con éxito. Serás redirigido.');
+      await cerrarSesion();
+      navigate('/registro', { replace: true });
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.detail ?? 'Error al eliminar cuenta.');
+      setEliminando(false);
     }
   }
 
@@ -188,9 +261,12 @@ export default function Perfil() {
 
   return (
     <div className="stack" style={{ maxWidth: 800, margin: '1.5rem auto' }}>
+      {/* Contenedor invisible para recaptcha de Firebase */}
+      <div id="recaptcha-container"></div>
+
       <div className="page-header">
         <h1>Mi perfil de Usuario</h1>
-        <p>Gestiona tu información de cuenta, verficación de seguridad y compras.</p>
+        <p>Gestiona tu información de cuenta, verificación de seguridad y compras.</p>
       </div>
 
       {errorMsg && <p className="form-error">{errorMsg}</p>}
@@ -223,9 +299,23 @@ export default function Perfil() {
             </div>
           </Card>
 
-          <Button variante="secondary" onClick={() => void manejarLogout()}>
-            Cerrar sesión
-          </Button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Button variante="secondary" onClick={() => void manejarLogout()} style={{ flex: 1 }}>
+              Cerrar sesión
+            </Button>
+            <Button
+              onClick={() => void manejarEliminarCuenta()}
+              disabled={eliminando}
+              style={{
+                backgroundColor: 'transparent',
+                borderColor: '#ef4444',
+                color: '#ef4444',
+                flex: 1
+              }}
+            >
+              {eliminando ? 'Eliminando...' : 'Eliminar cuenta'}
+            </Button>
+          </div>
         </div>
 
         {/* Columna 2: Seguridad y KYC */}
@@ -252,19 +342,19 @@ export default function Perfil() {
                 ) : (
                   <div className="stack" style={{ gap: '0.5rem', marginTop: '0.5rem' }}>
                     <p style={{ fontSize: '0.85rem' }} className="text-muted">
-                      Ingresa tu número de teléfono para recibir un SMS de prueba con Firebase Auth.
+                      Ingresa tu número (ej: +573001234567) para recibir un código de confirmación SMS real.
                     </p>
                     {!smsEnviado ? (
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <input
                           type="tel"
-                          placeholder="+57 300 123 4567"
+                          placeholder="+573001234567"
                           value={telefono}
                           onChange={(e) => setTelefono(e.target.value)}
                           style={{ flex: 1 }}
                         />
-                        <Button onClick={enviarCodigoSMS} disabled={cargandoTelefono} style={{ padding: '0.4rem 0.8rem' }}>
-                          Enviar SMS
+                        <Button onClick={() => void enviarCodigoSMS()} disabled={cargandoTelefono} style={{ padding: '0.4rem 0.8rem' }}>
+                          {cargandoTelefono ? 'Enviando...' : 'Enviar SMS'}
                         </Button>
                       </div>
                     ) : (
@@ -273,7 +363,7 @@ export default function Perfil() {
                           <input
                             type="text"
                             maxLength={6}
-                            placeholder="Código SMS (123456)"
+                            placeholder="Introduce el código de 6 dígitos"
                             value={codigoSMS}
                             onChange={(e) => setCodigoSMS(e.target.value)}
                             style={{ flex: 1, textAlign: 'center', letterSpacing: '4px', fontWeight: 'bold' }}
@@ -283,7 +373,10 @@ export default function Perfil() {
                           </Button>
                         </div>
                         <button
-                          onClick={() => setSmsEnviado(false)}
+                          onClick={() => {
+                            setSmsEnviado(false);
+                            setConfirmationResult(null);
+                          }}
                           style={{ background: 'none', border: 'none', color: '#e10600', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.8rem', textAlign: 'left' }}
                         >
                           Cambiar número de teléfono
@@ -323,7 +416,7 @@ export default function Perfil() {
                         {cargandoKyc ? 'Iniciando...' : 'Verificar con Didit'}
                       </Button>
                       
-                      {/* Botón de simulación sólo visible en desarrollo/sandbox */}
+                      {/* Botón de simulación para acelerar pruebas sandbox en desarrollo */}
                       <Button
                         variante="secondary"
                         onClick={() => void simularWebhookAprobacion()}

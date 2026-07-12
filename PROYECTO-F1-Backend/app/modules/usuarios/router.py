@@ -149,3 +149,15 @@ def webhook_didit(payload: dict, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "processed", "kyc_estado": usuario.kyc_estado}
 
+
+# Eliminar mi cuenta (Para facilitar pruebas en prototipos)
+@router.delete("/me", status_code=status.HTTP_200_OK)
+def eliminar_mi_cuenta(
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    db.delete(usuario)
+    db.commit()
+    return {"detail": "Cuenta eliminada correctamente"}
+
+

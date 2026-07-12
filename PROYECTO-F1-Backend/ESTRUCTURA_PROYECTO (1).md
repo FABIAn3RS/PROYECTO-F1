@@ -24,23 +24,25 @@ proyecto_f1_bcknd/
     ├── database.py                # Conexión a PostgreSQL (SessionLocal, Base, get_db)
     ├── config.py                  # Variables de entorno centralizadas (a crear)
     │
-    ├── core/                      # (a crear) utilidades transversales
+    ├── core/                      # utilidades transversales
     │   ├── security.py            # JWT, hash de passwords, dependencias de auth
-    │   └── exceptions.py          # Excepciones HTTP reutilizables
+    │   ├── exceptions.py          # Excepciones HTTP reutilizables
+    │   ├── email.py               # Cliente e integración real de Resend
+    │   └── didit.py               # Cliente e integración real de Didit KYC
     │
     └── modules/                   # Un paquete por épica del backlog
         │
         ├── auth/                  # EP-01 Gestión de usuarios
-        │   ├── models.py          # Usuario, PasswordResetToken
-        │   ├── schemas.py         # UsuarioCreate, LoginRequest, Token...
-        │   ├── crud.py
-        │   └── router.py          # /auth/register, /login, /logout, /forgot-password
+        │   ├── models.py          # Usuario, PasswordResetToken, CodigoVerificacion
+        │   ├── schemas.py         # UsuarioCreate, LoginRequest, Token, VerifyEmailRequest...
+        │   ├── crud.py            # Operaciones de usuario y códigos de verificación
+        │   └── router.py          # /auth/register, /login, /logout, /forgot-password, /verify-email, /resend-code
         │
         ├── usuarios/               # EP-02 Gestión del perfil
         │   ├── models.py           # (extiende Usuario: piloto/escudería favorita)
         │   ├── schemas.py
         │   ├── crud.py
-        │   └── router.py           # /users/me (GET, PUT)
+        │   └── router.py           # /users/me (GET, PUT, DELETE), /users/me/verificar-telefono, /users/me/kyc/session, /users/webhooks/didit (Webhook)
         │
         ├── calendario/              # EP-03 Calendario de Grandes Premios
         │   ├── models.py            # GranPremio
@@ -71,6 +73,12 @@ proyecto_f1_bcknd/
         │   ├── schemas.py
         │   ├── crud.py
         │   └── router.py                # /grandes-premios/{id}/resultados
+        │
+        ├── acceso/                      # EP-07 Gestión de Pases y depósitos
+        │   ├── models.py                # PaseTemporada
+        │   ├── schemas.py
+        │   ├── crud.py
+        │   └── router.py                # /acceso/checkout, /acceso/pase, /acceso/mock-payment-success/{session_id}
         │
         └── admin/                        # EP-08 Panel de administración
             ├── schemas.py

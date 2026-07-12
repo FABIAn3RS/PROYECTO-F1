@@ -85,4 +85,9 @@ export async function obtenerPase(): Promise<PaseTemporadaInfo | null> {
   return data;
 }
 
+export async function eliminarCuenta(): Promise<void> {
+  await axiosClient.delete('/users/me');
+}
+
+
 
