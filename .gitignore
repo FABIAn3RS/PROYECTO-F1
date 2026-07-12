@@ -1,0 +1,34 @@
+# Entornos y secretos
+.env
+.env.*
+.venv/
+venv/
+env/
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Bases de datos y datos locales
+*.sqlite3
+*.db
+pgdata/
+
+# IDE y sistema
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# Docker
+*.local
