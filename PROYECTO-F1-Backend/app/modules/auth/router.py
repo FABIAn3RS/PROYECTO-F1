@@ -10,12 +10,23 @@ from app.modules.auth import crud, schemas, models
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
 
+from app.core.email import send_verification_email
+
+
 # HU-01: Registro de usuario
 @router.post("/register", response_model=schemas.UsuarioOut, status_code=status.HTTP_201_CREATED)
 def registrar(datos: schemas.UsuarioCreate, db: Session = Depends(get_db)):
     if crud.get_usuario_by_correo(db, datos.correo):
         raise SolicitudInvalida("El correo ya está registrado")
-    return crud.crear_usuario(db, datos)
+    usuario = crud.crear_usuario(db, datos)
+    
+    # Generar código de verificación
+    codigo = crud.crear_codigo_verificacion(db, usuario.id)
+    
+    # Enviar email
+    send_verification_email(usuario.correo, codigo)
+    
+    return usuario
 
 
 # HU-02: Inicio de sesión
@@ -28,9 +39,38 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
     if not usuario.activo:
         raise SinPermisos("Cuenta inactiva")
+        
+    if not usuario.correo_verificado:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="correo_no_verificado"
+        )
 
     access_token = create_access_token(data={"sub": str(usuario.id)})
     return schemas.Token(access_token=access_token)
+
+
+@router.post("/verify-email", status_code=status.HTTP_200_OK)
+def verificar_correo(datos: schemas.VerifyEmailRequest, db: Session = Depends(get_db)):
+    exito = crud.validar_codigo_verificacion(db, datos.correo, datos.codigo)
+    if not exito:
+        raise SolicitudInvalida("Código de verificación inválido, usado o expirado")
+    return {"detail": "Correo verificado correctamente"}
+
+
+@router.post("/resend-code", status_code=status.HTTP_200_OK)
+def reenviar_codigo(datos: schemas.ResendCodeRequest, db: Session = Depends(get_db)):
+    usuario = crud.get_usuario_by_correo(db, datos.correo)
+    if not usuario:
+        raise SolicitudInvalida("El correo no está registrado")
+    if usuario.correo_verificado:
+        return {"detail": "El correo ya está verificado"}
+    
+    codigo = crud.crear_codigo_verificacion(db, usuario.id)
+    send_verification_email(usuario.correo, codigo)
+    return {"detail": "Código de verificación reenviado correctamente"}
+
 
 
 # HU-04: Cerrar sesión (invalida el token actual vía blacklist)

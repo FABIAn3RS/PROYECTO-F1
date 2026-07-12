@@ -43,3 +43,12 @@ export async function login(correo: string, password: string): Promise<TokenResp
 export async function logout(): Promise<void> {
   await axiosClient.post('/auth/logout');
 }
+
+export async function verifyEmail(correo: string, codigo: string): Promise<void> {
+  await axiosClient.post('/auth/verify-email', { correo, codigo });
+}
+
+export async function resendCode(correo: string): Promise<void> {
+  await axiosClient.post('/auth/resend-code', { correo });
+}
+

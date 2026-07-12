@@ -48,12 +48,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  async function refrescarPerfil(): Promise<void> {
+    try {
+      const perfil = await obtenerPerfil();
+      setUsuario(perfil);
+    } catch {
+      // Si falla obtener perfil, asumimos que la sesión expiró o es inválida
+      localStorage.removeItem(TOKEN_KEY);
+      setUsuario(null);
+    }
+  }
+
   const value: AuthContextValue = {
     usuario,
     cargando,
     esAdmin: usuario?.rol.nombre === 'administrador',
     iniciarSesion,
     cerrarSesion,
+    refrescarPerfil,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

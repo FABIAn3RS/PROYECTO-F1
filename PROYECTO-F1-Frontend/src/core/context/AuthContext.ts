@@ -7,6 +7,7 @@ export interface AuthContextValue {
   esAdmin: boolean;
   iniciarSesion: (correo: string, password: string) => Promise<void>;
   cerrarSesion: () => Promise<void>;
+  refrescarPerfil: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);

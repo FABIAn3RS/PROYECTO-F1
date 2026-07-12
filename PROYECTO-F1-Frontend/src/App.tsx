@@ -5,6 +5,7 @@ import AdminRoute from './core/guards/AdminRoute';
 import Home from './features/home/pages/Home';
 import Login from './features/auth/pages/Login';
 import Registro from './features/auth/pages/Registro';
+import VerificarCorreo from './features/auth/pages/VerificarCorreo';
 import ListaGPs from './features/calendario/pages/ListaGPs';
 import DetalleGP from './features/calendario/pages/DetalleGP';
 import Pilotos from './features/competencia/pages/Pilotos';
@@ -28,6 +29,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/verificar-correo" element={<VerificarCorreo />} />
         <Route path="/calendario" element={<ListaGPs />} />
         <Route path="/pilotos" element={<Pilotos />} />
         <Route path="/equipos" element={<Equipos />} />

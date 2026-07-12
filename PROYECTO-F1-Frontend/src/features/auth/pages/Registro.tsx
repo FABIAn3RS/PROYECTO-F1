@@ -40,7 +40,9 @@ export default function Registro() {
     setEnviando(true);
     try {
       await registrar({ nombre, correo, password });
-      navigate('/login', { state: { mensaje: 'Cuenta creada correctamente. Ya puedes iniciar sesión.' } });
+      navigate(`/verificar-correo?email=${encodeURIComponent(correo)}`, {
+        state: { mensaje: 'Hemos enviado un código de verificación de 6 dígitos a tu correo.' }
+      });
     } catch (err) {
       setError(getErrorMessage(err, 'No se pudo completar el registro.'));
     } finally {

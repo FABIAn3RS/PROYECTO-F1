@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -9,6 +9,7 @@ from app.modules.usuarios import crud, schemas
 from app.modules.pronosticos.models import Pronostico
 from app.modules.pronosticos.schemas import PronosticoOut
 from app.modules.resultados.models import ResultadoOficial, ResultadoPosicion
+from app.core.didit import crear_sesion_didit
 
 router = APIRouter(prefix="/users", tags=["Usuarios/Perfil"])
 
@@ -90,3 +91,61 @@ def obtener_mis_estadisticas(
         aciertos_vuelta_rapida=aciertos_vr,
         aciertos_podio=aciertos_podio
     )
+
+
+# Verificación Telefónica (Firebase)
+@router.post("/me/verificar-telefono", response_model=schemas.UsuarioPerfilOut)
+def verificar_telefono(
+    datos: schemas.VerificarTelefonoRequest,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    usuario.telefono = datos.telefono
+    usuario.telefono_verificado = True
+    db.commit()
+    db.refresh(usuario)
+    return usuario
+
+
+# Verificación KYC (Didit Session Token)
+@router.post("/me/kyc/session", response_model=schemas.KycSessionOut)
+def obtener_sesion_kyc(
+    request: Request,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Generar URL del webhook dinámica o usar dominio del config
+    callback_url = f"{request.base_url}users/webhooks/didit"
+    session_data = crear_sesion_didit(str(usuario.id), callback_url)
+    return session_data
+
+
+# Webhook de Didit (Público)
+@router.post("/webhooks/didit", status_code=status.HTTP_200_OK)
+def webhook_didit(payload: dict, db: Session = Depends(get_db)):
+    vendor_session_id = payload.get("vendor_session_id")
+    status_kyc = payload.get("status")
+    
+    if not vendor_session_id:
+        return {"status": "ignored", "reason": "Falta vendor_session_id"}
+        
+    try:
+        user_uuid = uuid.UUID(vendor_session_id)
+    except ValueError:
+        return {"status": "ignored", "reason": "vendor_session_id no es un UUID válido"}
+        
+    usuario = db.query(Usuario).filter(Usuario.id == user_uuid).first()
+    if not usuario:
+        return {"status": "ignored", "reason": "Usuario no encontrado"}
+        
+    if status_kyc in ("approved", "aprobado", "COMPLETED", "completed"):
+        usuario.kyc_estado = "aprobado"
+    elif status_kyc in ("rejected", "rechazado", "FAILED", "failed"):
+        usuario.kyc_estado = "rechazado"
+    else:
+        # Se puede dejar en el estado en que esté o actualizar a 'en_progreso'
+        usuario.kyc_estado = "en_progreso"
+        
+    db.commit()
+    return {"status": "processed", "kyc_estado": usuario.kyc_estado}
+

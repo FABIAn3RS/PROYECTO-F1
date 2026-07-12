@@ -30,7 +30,13 @@ export default function Login() {
       await iniciarSesion(correo, password);
       const destino = state?.from?.pathname ?? '/';
       navigate(destino, { replace: true });
-    } catch (err) {
+    } catch (err: any) {
+      if (err.response?.data?.detail === 'correo_no_verificado') {
+        navigate(`/verificar-correo?email=${encodeURIComponent(correo)}`, {
+          state: { mensaje: 'Tu correo aún no está verificado. Por favor, verifícalo para ingresar.' }
+        });
+        return;
+      }
       setError(getErrorMessage(err, 'No se pudo iniciar sesión.'));
     } finally {
       setEnviando(false);

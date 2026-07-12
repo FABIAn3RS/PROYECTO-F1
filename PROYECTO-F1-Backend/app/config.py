@@ -20,3 +20,13 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 THESPORTSDB_API_KEY = os.getenv("THESPORTSDB_API_KEY", "123")
 THESPORTSDB_BASE_URL = os.getenv("THESPORTSDB_BASE_URL", "https://www.thesportsdb.com/api/v1/json")
+
+# Resend Email Verification
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "mock")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
+
+# Didit KYC Identity Verification
+DIDIT_CLIENT_ID = os.getenv("DIDIT_CLIENT_ID", "")
+DIDIT_CLIENT_SECRET = os.getenv("DIDIT_CLIENT_SECRET", "")
+DIDIT_API_URL = os.getenv("DIDIT_API_URL", "https://apix.didit.protocol")  # Default to sandbox
+
