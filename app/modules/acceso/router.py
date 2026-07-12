@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.core.security import get_current_user
 from app.modules.auth.models import Usuario
-from app.modules.acceso import crud, schemas
+from app.modules.acceso import crud, schemas, models
 from app.config import STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 
 try:
@@ -24,6 +24,18 @@ def create_checkout_session(
     usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Verificar teléfono y KYC
+    if not usuario.telefono_verificado:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="telefono_no_verificado"
+        )
+    if usuario.kyc_estado != "aprobado":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="kyc_no_aprobado"
+        )
+
     # Verificar si ya tiene pase activo
     pase_activo = crud.obtener_pase_activo(db, usuario.id)
     if pase_activo:
@@ -110,3 +122,18 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         crud.fallar_pase_por_session(db, session_id)
 
     return {"status": "success"}
+
+
+@router.get("/pase", response_model=schemas.PaseTemporadaBase | None)
+def check_pase(
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    pase = crud.obtener_pase_activo(db, usuario.id)
+    if not pase:
+        # Check if there is any pending or failed pase to show status
+        pase = db.query(models.PaseTemporada).filter(
+            models.PaseTemporada.usuario_id == usuario.id
+        ).order_by(models.PaseTemporada.created_at.desc()).first()
+    return pase
+

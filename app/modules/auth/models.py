@@ -26,6 +26,10 @@ class Usuario(Base):
     password_hash = Column(String(255), nullable=False)
     rol_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
     activo = Column(Boolean, nullable=False, default=True)
+    correo_verificado = Column(Boolean, nullable=False, default=False)
+    telefono = Column(String(30), nullable=True)
+    telefono_verificado = Column(Boolean, nullable=False, default=False)
+    kyc_estado = Column(String(20), nullable=False, default="pendiente")
 
     # EP-02: preferencias de perfil
     piloto_favorito_id = Column(UUID(as_uuid=True), ForeignKey("pilotos.id"), nullable=True)
@@ -46,6 +50,17 @@ class PasswordResetToken(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("uuid_generate_v4()"))
     usuario_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
     token = Column(String(255), nullable=False, unique=True)
+    expira_en = Column(DateTime, nullable=False)
+    usado = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class CodigoVerificacion(Base):
+    __tablename__ = "codigos_verificacion"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("uuid_generate_v4()"))
+    usuario_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    codigo = Column(String(6), nullable=False)
     expira_en = Column(DateTime, nullable=False)
     usado = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, server_default=func.now())

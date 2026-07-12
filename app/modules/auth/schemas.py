@@ -33,6 +33,10 @@ class UsuarioCreate(UsuarioBase):
 class UsuarioOut(UsuarioBase):
     id: uuid.UUID
     activo: bool
+    correo_verificado: bool
+    telefono: str | None = None
+    telefono_verificado: bool
+    kyc_estado: str
     rol: RolOut
     created_at: datetime
 
@@ -52,3 +56,13 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     nueva_password: str = Field(min_length=8, max_length=72)
+
+
+class VerifyEmailRequest(BaseModel):
+    correo: EmailStr
+    codigo: str = Field(min_length=6, max_length=6)
+
+
+class ResendCodeRequest(BaseModel):
+    correo: EmailStr
+

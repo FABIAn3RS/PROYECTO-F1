@@ -16,6 +16,10 @@ class UsuarioPerfilOut(BaseModel):
     nombre: str
     correo: EmailStr
     activo: bool
+    correo_verificado: bool
+    telefono: str | None = None
+    telefono_verificado: bool
+    kyc_estado: str
     rol: RolOut
     piloto_favorito_id: uuid.UUID | None = None
     escuderia_favorita_id: uuid.UUID | None = None
@@ -34,3 +38,15 @@ class EstadisticasOut(BaseModel):
     aciertos_pole: int
     aciertos_vuelta_rapida: int
     aciertos_podio: int
+
+
+class VerificarTelefonoRequest(BaseModel):
+    telefono: str = Field(..., min_length=7, max_length=30)
+    firebase_token: str
+
+
+class KycSessionOut(BaseModel):
+    session_id: str
+    session_url: str
+    token: str
+

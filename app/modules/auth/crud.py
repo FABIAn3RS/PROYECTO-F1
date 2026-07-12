@@ -58,3 +58,51 @@ def validar_reset_token(db: Session, token: str) -> models.PasswordResetToken | 
 def actualizar_password(db: Session, usuario: models.Usuario, nueva_password: str) -> None:
     usuario.password_hash = hash_password(nueva_password)
     db.commit()
+
+
+def crear_codigo_verificacion(db: Session, usuario_id) -> str:
+    import random
+    codigo = "".join(random.choices("0123456789", k=6))
+    
+    # Desactivar cualquier código anterior activo del mismo usuario
+    db.query(models.CodigoVerificacion).filter(
+        models.CodigoVerificacion.usuario_id == usuario_id,
+        models.CodigoVerificacion.usado == False
+    ).update({"usado": True})
+    
+    nuevo_codigo = models.CodigoVerificacion(
+        usuario_id=usuario_id,
+        codigo=codigo,
+        expira_en=datetime.now(timezone.utc) + timedelta(minutes=15),
+    )
+    db.add(nuevo_codigo)
+    db.commit()
+    return codigo
+
+
+def validar_codigo_verificacion(db: Session, correo: str, codigo: str) -> bool:
+    usuario = get_usuario_by_correo(db, correo)
+    if not usuario:
+        return False
+    
+    registro = (
+        db.query(models.CodigoVerificacion)
+        .filter(
+            models.CodigoVerificacion.usuario_id == usuario.id,
+            models.CodigoVerificacion.codigo == codigo,
+            models.CodigoVerificacion.usado == False
+        )
+        .first()
+    )
+    if not registro:
+        return False
+    
+    # Verificar expiracion
+    if registro.expira_en.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        return False
+        
+    registro.usado = True
+    usuario.correo_verificado = True
+    db.commit()
+    return True
+
