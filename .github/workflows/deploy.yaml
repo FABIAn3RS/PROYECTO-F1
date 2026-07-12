@@ -5,12 +5,12 @@ on:
       - 'master'   # <- cambia a 'main' si esa es tu rama principal
 
 env:
-  PROJECT_ID: 'project-37ca8556-4c5d-47bd-9fd'
+  PROJECT_ID: 'pronosticos-f1'
   REGION: 'us-central1'
   SERVICE: 'pronosticos-f1-frontend'
   REPOSITORY: 'pronosticos-f1'
-  WORKLOAD_IDENTITY_PROVIDER: 'projects/807177859654/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
-  SERVICE_ACCOUNT: 'github-actions@project-37ca8556-4c5d-47bd-9fd.iam.gserviceaccount.com'
+  WORKLOAD_IDENTITY_PROVIDER: 'projects/158357528959/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+  SERVICE_ACCOUNT: 'github-actions@pronosticos-f1.iam.gserviceaccount.com'
 
 jobs:
   deploy:
@@ -30,10 +30,6 @@ jobs:
           workload_identity_provider: '${{ env.WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ env.SERVICE_ACCOUNT }}'
           token_format: 'access_token'
-
-      - name: 'Check token identity'
-        run: |
-          curl -s -G --data-urlencode "access_token=${{ steps.auth.outputs.auth_token }}" https://oauth2.googleapis.com/tokeninfo
 
       - name: 'Docker Auth'
         uses: 'docker/login-action@v3'
