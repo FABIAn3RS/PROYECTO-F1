@@ -37,16 +37,24 @@ export default function Pilotos() {
         <p>Busca pilotos de Fórmula 1 desde TheSportsDB.</p>
       </div>
 
-      <div className="flex-between" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
-        <input
-          type="search"
-          placeholder="Buscar piloto (ej. Max Verstappen)"
-          value={busquedaPiloto}
-          onChange={(e) => setBusquedaPiloto(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && void buscarPilotos()}
-          style={{ flex: 1, minWidth: 220 }}
-        />
-        <Button variante="secondary" tamano="sm" onClick={() => void buscarPilotos()}>
+      <div className="flex-between" style={{ gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div className="form-group" style={{ flex: 1, minWidth: 220 }}>
+          <label htmlFor="busqueda-piloto">Buscar piloto</label>
+          <input
+            id="busqueda-piloto"
+            type="search"
+            placeholder="Ej. Max Verstappen"
+            value={busquedaPiloto}
+            onChange={(e) => setBusquedaPiloto(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && void buscarPilotos()}
+          />
+        </div>
+        <Button
+          variante="secondary"
+          tamano="sm"
+          onClick={() => void buscarPilotos()}
+          style={{ width: '70px', height: '40px' }}
+        >
           Buscar
         </Button>
       </div>

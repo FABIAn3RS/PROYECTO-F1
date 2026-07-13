@@ -80,16 +80,24 @@ export default function Equipos() {
         <p>Escuderías de Fórmula 1 y sus plantillas desde TheSportsDB.</p>
       </div>
 
-      <div className="flex-between" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
-        <input
-          type="search"
-          placeholder="Buscar equipo (ej. Ferrari, Red Bull)"
-          value={busquedaEquipo}
-          onChange={(e) => setBusquedaEquipo(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && void buscarEquipos()}
-          style={{ flex: 1, minWidth: 220 }}
-        />
-        <Button variante="secondary" tamano="sm" onClick={() => void buscarEquipos()}>
+      <div className="flex-between" style={{ gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div className="form-group" style={{ flex: 1, minWidth: 220 }}>
+          <label htmlFor="busqueda-equipo">Buscar equipo</label>
+          <input
+            id="busqueda-equipo"
+            type="search"
+            placeholder="Ej. Ferrari, Red Bull"
+            value={busquedaEquipo}
+            onChange={(e) => setBusquedaEquipo(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && void buscarEquipos()}
+          />
+        </div>
+        <Button
+          variante="secondary"
+          tamano="sm"
+          onClick={() => void buscarEquipos()}
+          style={{ width: '70px', height: '40px' }}
+        >
           Buscar
         </Button>
       </div>
