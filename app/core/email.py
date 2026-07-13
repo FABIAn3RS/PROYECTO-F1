@@ -42,7 +42,8 @@ def send_verification_email(to_email: str, code: str) -> bool:
     url = "https://api.resend.com/emails"
     headers = {
         "Authorization": f"Bearer {config.RESEND_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "F1PronosticosBackend/1.0"  # <-- ESTA LÍNEA SOLUCIONA EL ERROR 1010
     }
     payload = {
         "from": f"F1 Pronósticos <{config.RESEND_FROM_EMAIL}>",
