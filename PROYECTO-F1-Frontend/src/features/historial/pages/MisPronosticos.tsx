@@ -32,7 +32,7 @@ export default function MisPronosticos() {
 
   const gpsConPronostico = new Set(pronosticos.map((p) => p.gran_premio_id));
   const proximoGpDisponible = Object.values(gps).find(
-    (gp) => gp.estado === 'proximo' && !gpsConPronostico.has(gp.id),
+    (gp) => gp.estado !== 'finalizado' && !gpsConPronostico.has(gp.id),
   );
 
   return (
@@ -87,13 +87,16 @@ export default function MisPronosticos() {
             <tbody>
               {pronosticos.map((p) => {
                 const gp = gps[p.gran_premio_id];
+                const sePuedeModificar = !p.confirmado && Boolean(gp) && gp?.estado !== 'finalizado';
                 return (
                   <tr key={p.id}>
                     <td>{gp ? `${gp.nombre} (Ronda ${gp.ronda})` : p.gran_premio_id}</td>
                     <td>{p.confirmado ? 'Confirmado' : 'Borrador'}</td>
                     <td>{p.puntos_obtenidos}</td>
                     <td>
-                      <Link to={`/pronosticos/${p.gran_premio_id}`}>Ver</Link>
+                      <Link to={`/pronosticos/${p.gran_premio_id}`}>
+                        {sePuedeModificar ? 'Modificar' : 'Ver'}
+                      </Link>
                     </td>
                   </tr>
                 );

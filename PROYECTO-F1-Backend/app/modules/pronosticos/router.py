@@ -15,8 +15,9 @@ router = APIRouter(prefix="/pronosticos", tags=["Pronósticos"])
 
 
 def validar_plazo_gp(gp: GranPremio):
-    """Verifica que el fin de semana del GP no haya comenzado."""
-    if datetime.now() >= gp.fecha_inicio:
+    """Verifica que la carrera no haya comenzado (se puede pronosticar/modificar
+    durante todo el fin de semana, hasta el momento en que arranca la carrera)."""
+    if datetime.now() >= gp.fecha_carrera:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El plazo para realizar o modificar pronósticos para este Gran Premio ha finalizado."

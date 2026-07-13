@@ -144,7 +144,9 @@ export default function MiPronostico() {
   if (error) return <p className="form-error">{error}</p>;
   if (!gp || !gpId) return null;
 
-  const plazoAbierto = gp.estado === 'proximo';
+  // El plazo cierra cuando arranca la carrera (fecha_carrera), no al inicio del
+  // fin de semana: sigue abierto en 'proximo' y en 'en_curso', se cierra en 'finalizado'.
+  const plazoAbierto = gp.estado !== 'finalizado';
   const tienePase = pase?.estado === 'activo';
   const esGpGratis = usuario?.gp_gratis_id === gp.id;
   const yaUsoGratisEnOtroGp = Boolean(usuario?.gp_gratis_id) && !esGpGratis && !tienePase;

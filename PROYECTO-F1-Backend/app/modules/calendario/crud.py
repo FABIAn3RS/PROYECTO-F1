@@ -18,16 +18,16 @@ def obtener_gran_premio(db: Session, gp_id: uuid.UUID) -> models.GranPremio | No
 def obtener_proximo_gran_premio(db: Session) -> models.GranPremio | None:
     """
     Usado por el módulo `acceso` para asignar el pronóstico gratis: el próximo GP
-    cuyo plazo de pronósticos todavía sigue abierto (fecha_inicio no ha pasado).
-    No usar fecha_carrera aquí: un GP "en curso" ya cerró su plazo aunque su
-    fecha_carrera sea la más próxima, y asignarlo dejaría al usuario sin poder
-    usar nunca su pronóstico gratis.
+    cuyo plazo de pronósticos todavía sigue abierto. El plazo cierra cuando arranca
+    la carrera (fecha_carrera), no en fecha_inicio del fin de semana — debe coincidir
+    con `validar_plazo_gp` en el router de pronósticos para no asignar un GP en el
+    que el usuario ya no podría pronosticar.
     """
     from datetime import datetime
 
     return (
         db.query(models.GranPremio)
-        .filter(models.GranPremio.fecha_inicio >= datetime.now())
-        .order_by(models.GranPremio.fecha_inicio.asc())
+        .filter(models.GranPremio.fecha_carrera >= datetime.now())
+        .order_by(models.GranPremio.fecha_carrera.asc())
         .first()
     )

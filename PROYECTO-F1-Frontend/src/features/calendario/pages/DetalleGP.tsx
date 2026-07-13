@@ -93,7 +93,7 @@ export default function DetalleGP() {
       </Card>
 
       <div className="stack">
-        {gp.estado === 'proximo' && (
+        {gp.estado !== 'finalizado' && (
           <p className="text-muted">
             <Link to={`/pronosticos/${gp.id}`}>Hacer mi pronóstico para este Gran Premio →</Link>
           </p>
