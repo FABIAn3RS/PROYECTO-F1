@@ -28,6 +28,19 @@ def crear_pase_pendiente(db: Session, usuario_id: uuid.UUID, session_id: str) ->
     return pase
 
 
+def obtener_pase_por_session_usuario(
+    db: Session, session_id: str, usuario_id: uuid.UUID
+) -> models.PaseTemporada | None:
+    return (
+        db.query(models.PaseTemporada)
+        .filter(
+            models.PaseTemporada.stripe_checkout_session_id == session_id,
+            models.PaseTemporada.usuario_id == usuario_id,
+        )
+        .first()
+    )
+
+
 def activar_pase_por_session(db: Session, session_id: str, payment_intent_id: str) -> models.PaseTemporada | None:
     pase = db.query(models.PaseTemporada).filter(models.PaseTemporada.stripe_checkout_session_id == session_id).first()
     if pase:
