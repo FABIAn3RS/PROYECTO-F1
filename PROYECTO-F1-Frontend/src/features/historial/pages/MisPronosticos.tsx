@@ -30,11 +30,24 @@ export default function MisPronosticos() {
   if (cargando) return <Loader mensaje="Cargando tu historial..." />;
   if (error) return <p className="form-error">{error}</p>;
 
+  const gpsConPronostico = new Set(pronosticos.map((p) => p.gran_premio_id));
+  const proximoGpDisponible = Object.values(gps).find(
+    (gp) => gp.estado === 'proximo' && !gpsConPronostico.has(gp.id),
+  );
+
   return (
     <div className="stack">
-      <div className="page-header">
-        <h1>Mis pronósticos</h1>
-        <p>Historial, aciertos y puntuación acumulada.</p>
+      <div className="page-header flex-between">
+        <div>
+          <h1>Mis pronósticos</h1>
+          <p>Historial, aciertos y puntuación acumulada.</p>
+        </div>
+        <Link
+          to={proximoGpDisponible ? `/pronosticos/${proximoGpDisponible.id}` : '/calendario'}
+          className="btn btn-primary"
+        >
+          + Nuevo pronóstico
+        </Link>
       </div>
 
       {estadisticas && (

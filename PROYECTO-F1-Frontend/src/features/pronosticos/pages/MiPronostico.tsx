@@ -19,6 +19,9 @@ import { getErrorMessage, getErrorStatus } from '../../../core/api/apiError';
 import Card from '../../../shared/components/Card';
 import Button from '../../../shared/components/Button';
 import Loader from '../../../shared/components/Loader';
+import PilotoAvatar from '../components/PilotoAvatar';
+import SeleccionarPilotoModal from '../components/SeleccionarPilotoModal';
+import { usePilotoFotos } from '../hooks/usePilotoFotos';
 
 interface Form {
   p1: string;
@@ -27,6 +30,32 @@ interface Form {
   pole: string;
   vueltaRapida: string;
 }
+
+interface Paso {
+  titulo: string;
+  descripcion: string;
+  campos: (keyof Form)[];
+  etiquetas?: string[];
+}
+
+const PASOS: Paso[] = [
+  {
+    titulo: 'Podio',
+    descripcion: 'Predice quién quedará 1°, 2° y 3° en la carrera.',
+    campos: ['p1', 'p2', 'p3'],
+    etiquetas: ['1°', '2°', '3°'],
+  },
+  {
+    titulo: 'Pole Position',
+    descripcion: 'Predice quién logrará la pole position en la clasificación.',
+    campos: ['pole'],
+  },
+  {
+    titulo: 'Vuelta Rápida',
+    descripcion: 'Predice quién marcará la vuelta más rápida de la carrera.',
+    campos: ['vueltaRapida'],
+  },
+];
 
 const FORM_VACIO: Form = { p1: '', p2: '', p3: '', pole: '', vueltaRapida: '' };
 
@@ -44,6 +73,10 @@ function formularioCompleto(f: Form): boolean {
   return Boolean(f.p1 && f.p2 && f.p3 && f.pole && f.vueltaRapida);
 }
 
+function pasoCompleto(paso: Paso, f: Form): boolean {
+  return paso.campos.every((campo) => Boolean(f[campo]));
+}
+
 export default function MiPronostico() {
   const { id: gpId } = useParams<{ id: string }>();
   const { usuario } = useAuth();
@@ -54,6 +87,9 @@ export default function MiPronostico() {
   const [pase, setPase] = useState<PaseTemporadaInfo | null>(null);
   const [pronostico, setPronostico] = useState<Pronostico | null>(null);
   const [form, setForm] = useState<Form>(FORM_VACIO);
+
+  const [pasoActual, setPasoActual] = useState(0);
+  const [modalAbierto, setModalAbierto] = useState(false);
 
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -102,6 +138,8 @@ export default function MiPronostico() {
     };
   }, [gpId]);
 
+  const fotos = usePilotoFotos(pilotos);
+
   if (cargando) return <Loader mensaje="Cargando tu pronóstico..." />;
   if (error) return <p className="form-error">{error}</p>;
   if (!gp || !gpId) return null;
@@ -110,15 +148,14 @@ export default function MiPronostico() {
   const tienePase = pase?.estado === 'activo';
   const esGpGratis = usuario?.gp_gratis_id === gp.id;
   const yaUsoGratisEnOtroGp = Boolean(usuario?.gp_gratis_id) && !esGpGratis && !tienePase;
+  const paso = PASOS[pasoActual];
 
   function nombrePiloto(pilotoId: string): string {
     return pilotos.find((p) => p.id === pilotoId)?.nombre ?? 'Desconocido';
   }
 
-  function actualizarCampo(campo: keyof Form, valor: string) {
-    setForm((prev) => ({ ...prev, [campo]: valor }));
-    setMostrarResumen(false);
-    setExito(null);
+  function piloto(pilotoId: string): PilotoConEscuderia | undefined {
+    return pilotos.find((p) => p.id === pilotoId);
   }
 
   function validarPodio(): string | null {
@@ -127,6 +164,19 @@ export default function MiPronostico() {
       return 'No puedes seleccionar el mismo piloto para más de una posición del podio.';
     }
     return null;
+  }
+
+  function guardarSeleccionPaso(nuevaSeleccion: (string | null)[]) {
+    setForm((prev) => {
+      const copia = { ...prev };
+      paso.campos.forEach((campo, i) => {
+        copia[campo] = nuevaSeleccion[i] ?? '';
+      });
+      return copia;
+    });
+    setModalAbierto(false);
+    setMostrarResumen(false);
+    setExito(null);
   }
 
   async function guardarBorrador() {
@@ -256,68 +306,96 @@ export default function MiPronostico() {
       ) : (
         plazoAbierto && (
           <Card>
-            <form
-              className="form"
-              style={{ maxWidth: 'none' }}
-              onSubmit={(e) => {
-                e.preventDefault();
-                void guardarBorrador();
-              }}
-            >
-              <div className="grid grid-2">
-                <div className="form-group">
-                  <label htmlFor="p1">Ganador (P1)</label>
-                  <select id="p1" value={form.p1} onChange={(e) => actualizarCampo('p1', e.target.value)}>
-                    <option value="">Selecciona un piloto</option>
-                    {pilotos.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="p2">P2</label>
-                  <select id="p2" value={form.p2} onChange={(e) => actualizarCampo('p2', e.target.value)}>
-                    <option value="">Selecciona un piloto</option>
-                    {pilotos.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="p3">P3</label>
-                  <select id="p3" value={form.p3} onChange={(e) => actualizarCampo('p3', e.target.value)}>
-                    <option value="">Selecciona un piloto</option>
-                    {pilotos.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="pole">Pole position</label>
-                  <select id="pole" value={form.pole} onChange={(e) => actualizarCampo('pole', e.target.value)}>
-                    <option value="">Selecciona un piloto</option>
-                    {pilotos.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="vr">Vuelta rápida</label>
-                  <select id="vr" value={form.vueltaRapida} onChange={(e) => actualizarCampo('vueltaRapida', e.target.value)}>
-                    <option value="">Selecciona un piloto</option>
-                    {pilotos.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+            <h3>{paso.titulo}</h3>
+            <p className="text-muted">{paso.descripcion}</p>
 
-              <Button type="submit" disabled={guardando}>
-                {guardando ? 'Guardando...' : pronostico ? 'Guardar cambios' : 'Guardar pronóstico'}
+            <div className="piloto-slots">
+              {paso.campos.map((campo, i) => {
+                const p = form[campo] ? piloto(form[campo]) : undefined;
+                return (
+                  <button
+                    key={campo}
+                    type="button"
+                    className="piloto-slot"
+                    onClick={() => setModalAbierto(true)}
+                  >
+                    <div className="piloto-slot__avatar-wrap">
+                      {p ? (
+                        <PilotoAvatar
+                          nombre={p.nombre}
+                          color={p.escuderia?.color}
+                          fotoUrl={fotos[p.id]}
+                          tamano="lg"
+                        />
+                      ) : (
+                        <div className="piloto-slot__vacio">+</div>
+                      )}
+                      {p && (
+                        <span className="piloto-slot__editar" aria-hidden="true">
+                          ✎
+                        </span>
+                      )}
+                    </div>
+                    {paso.etiquetas?.[i] && (
+                      <span className="piloto-slot__posicion">{paso.etiquetas[i]}</span>
+                    )}
+                    <span className="piloto-slot__nombre">{p ? p.nombre : 'Elegir piloto'}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="wizard-dots">
+              {PASOS.map((p, i) => (
+                <button
+                  key={p.titulo}
+                  type="button"
+                  className={[
+                    'wizard-dot',
+                    i === pasoActual ? 'wizard-dot--activo' : '',
+                    pasoCompleto(p, form) ? 'wizard-dot--completo' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => setPasoActual(i)}
+                  aria-label={p.titulo}
+                />
+              ))}
+            </div>
+
+            <div className="wizard-nav">
+              <Button
+                variante="secondary"
+                onClick={() => setPasoActual((prev) => Math.max(0, prev - 1))}
+                disabled={pasoActual === 0}
+              >
+                ← Anterior
               </Button>
-            </form>
+
+              {pasoActual < PASOS.length - 1 ? (
+                <Button onClick={() => setPasoActual((prev) => Math.min(PASOS.length - 1, prev + 1))}>
+                  Siguiente →
+                </Button>
+              ) : (
+                <Button onClick={() => void guardarBorrador()} disabled={guardando}>
+                  {guardando ? 'Guardando...' : pronostico ? 'Guardar cambios' : 'Guardar pronóstico'}
+                </Button>
+              )}
+            </div>
           </Card>
         )
+      )}
+
+      {modalAbierto && (
+        <SeleccionarPilotoModal
+          titulo={paso.titulo}
+          pilotos={pilotos}
+          seleccion={paso.campos.map((campo) => form[campo] || null)}
+          etiquetas={paso.etiquetas}
+          fotos={fotos}
+          onGuardar={guardarSeleccionPaso}
+          onCerrar={() => setModalAbierto(false)}
+        />
       )}
 
       {mostrarResumen && pronostico && !pronostico.confirmado && (
