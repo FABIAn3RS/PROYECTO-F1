@@ -92,9 +92,16 @@ export default function DetalleGP() {
         </div>
       </Card>
 
-      <p className="text-muted">
-        <Link to={`/resultados/${gp.id}`}>Ver resultados oficiales de este Gran Premio →</Link>
-      </p>
+      <div className="stack">
+        {gp.estado === 'proximo' && (
+          <p className="text-muted">
+            <Link to={`/pronosticos/${gp.id}`}>Hacer mi pronóstico para este Gran Premio →</Link>
+          </p>
+        )}
+        <p className="text-muted">
+          <Link to={`/resultados/${gp.id}`}>Ver resultados oficiales de este Gran Premio →</Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -16,7 +16,7 @@ TRUNCATE TABLE usuarios CASCADE;
 -- =========================================
 -- 1. Usuarios (incluye Admin y Usuarios de prueba)
 -- =========================================
-INSERT INTO usuarios (id, nombre, correo, password_hash, rol_id, activo, created_at, updated_at)
+INSERT INTO usuarios (id, nombre, correo, password_hash, rol_id, activo, correo_verificado, created_at, updated_at)
 VALUES 
     -- Administrador
     (
@@ -25,6 +25,7 @@ VALUES
         'admin@pronosticos.com',
         '$2b$12$6S4lxkDQ3JvdWIHB3PGjrODVjVKAt/Nb4iQoeZYIdmMfE/bz2LQSq', -- password123
         (SELECT id FROM roles WHERE nombre = 'administrador'),
+        TRUE,
         TRUE,
         NOW() - INTERVAL '30 days', 
         NOW() - INTERVAL '30 days'
@@ -37,6 +38,7 @@ VALUES
         '$2b$12$6S4lxkDQ3JvdWIHB3PGjrODVjVKAt/Nb4iQoeZYIdmMfE/bz2LQSq', -- password123
         (SELECT id FROM roles WHERE nombre = 'usuario'),
         TRUE,
+        TRUE,
         NOW() - INTERVAL '15 days',
         NOW() - INTERVAL '15 days'
     ),
@@ -47,6 +49,7 @@ VALUES
         'maria.lopez@example.com',
         '$2b$12$6S4lxkDQ3JvdWIHB3PGjrODVjVKAt/Nb4iQoeZYIdmMfE/bz2LQSq', -- password123
         (SELECT id FROM roles WHERE nombre = 'usuario'),
+        TRUE,
         TRUE,
         NOW() - INTERVAL '10 days',
         NOW() - INTERVAL '10 days'

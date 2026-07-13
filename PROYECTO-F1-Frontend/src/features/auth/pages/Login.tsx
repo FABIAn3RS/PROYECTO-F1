@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../../../core/hooks/useAuth';
 import { getErrorMessage } from '../../../core/api/apiError';
 import Card from '../../../shared/components/Card';
@@ -30,8 +31,8 @@ export default function Login() {
       await iniciarSesion(correo, password);
       const destino = state?.from?.pathname ?? '/';
       navigate(destino, { replace: true });
-    } catch (err: any) {
-      if (err.response?.data?.detail === 'correo_no_verificado') {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.data?.detail === 'correo_no_verificado') {
         navigate(`/verificar-correo?email=${encodeURIComponent(correo)}`, {
           state: { mensaje: 'Tu correo aún no está verificado. Por favor, verifícalo para ingresar.' }
         });

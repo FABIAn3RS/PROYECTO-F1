@@ -21,6 +21,9 @@ import GestionEscuderias from './features/admin/pages/GestionEscuderias';
 import RegistrarResultados from './features/admin/pages/RegistrarResultados';
 import Perfil from './features/perfil/pages/Perfil';
 import Equipos from './features/thesportsdb/pages/Equipos';
+import MiPronostico from './features/pronosticos/pages/MiPronostico';
+import MisPronosticos from './features/historial/pages/MisPronosticos';
+import Ranking from './features/historial/pages/Ranking';
 
 function App() {
   return (
@@ -31,16 +34,19 @@ function App() {
         <Route path="/registro" element={<Registro />} />
         <Route path="/verificar-correo" element={<VerificarCorreo />} />
         <Route path="/calendario" element={<ListaGPs />} />
+        <Route path="/calendario/:id" element={<DetalleGP />} />
         <Route path="/pilotos" element={<Pilotos />} />
         <Route path="/equipos" element={<Equipos />} />
         <Route path="/escuderias" element={<Escuderias />} />
         <Route path="/resultados" element={<ResultadosIndex />} />
         <Route path="/resultados/clasificacion" element={<ClasificacionCampeonato />} />
+        <Route path="/resultados/:id" element={<ResultadosGP />} />
         <Route path="/predicciones" element={<Predicciones />} />
+        <Route path="/ranking" element={<Ranking />} />
 
         <Route element={<PrivateRoute />}>
-          <Route path="/calendario/:id" element={<DetalleGP />} />
-          <Route path="/resultados/:id" element={<ResultadosGP />} />
+          <Route path="/pronosticos/:id" element={<MiPronostico />} />
+          <Route path="/historial" element={<MisPronosticos />} />
           <Route path="/perfil" element={<Perfil />} />
         </Route>
 

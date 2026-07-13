@@ -6,18 +6,16 @@
 
 ## 1. Resumen ejecutivo — qué es realmente el producto
 
-Se confirma la reconciliación que pediste: el producto **es** el de `DocPronósticosDeportivosF1.pdf`, no el de `HistoriasYEpicas.pdf`. Concretamente:
-
-- Los usuarios **crean sus propios pronósticos manuales** (ganador, pole, podio, vuelta rápida) por Gran Premio — esto es EP-05 del documento original y **ya existe y funciona en el backend** (`/pronosticos`), pero **no tiene ninguna pantalla en el frontend todavía**.
-- El acceso a crear pronósticos está limitado por un **Pase de Temporada de pago** (freemium) — esto es la Épica 8 que agregaron en el "Cambio 3" del documento original, y coincide con la Épica 7 de `HistoriasYEpicas.pdf`. **Ya existe en el backend** (`/acceso`) y el frontend de Perfil ya lo integra (checkout, KYC, teléfono).
-- La pantalla de "Predicciones" que yo construí en la sesión anterior como simulación 100% cliente **ya fue reemplazada** por un motor real en el backend (`app/modules/predicciones/motor.py`): un algoritmo estadístico determinista (no IA) que combina puntos de campeonato, rendimiento histórico en el circuito y forma reciente. Es contenido informativo público, separado de los pronósticos que el usuario apuesta.
+- Los usuarios **crean sus propios pronósticos manuales** (ganador, pole, podio, vuelta rápida) **ya existe y funciona en el backend** (`/pronosticos`), pero **no tiene ninguna pantalla en el frontend todavía**.
+- El acceso a crear pronósticos está limitado por un **Pase de Temporada de pago** (freemium) **Ya existe en el backend** (`/acceso`) y el frontend de Perfil ya lo integra (checkout, KYC, teléfono).
+- La pantalla de "Predicciones" **ya fue reemplazada** por un motor real en el backend (`app/modules/predicciones/motor.py`): un algoritmo estadístico determinista (no IA) que combina puntos de campeonato, rendimiento histórico en el circuito y forma reciente. Es contenido informativo público, separado de los pronósticos que el usuario apuesta.
 - Se agregó verificación de correo (Resend), teléfono (Firebase, simulado en `.env`) y KYC (Didit, simulado) como requisito para poder comprar el Pase de Temporada — esto no estaba en ninguno de los dos backlogs originales, es una decisión posterior documentada solo en el README.
 
 **Conclusión:** hay dos productos coexistiendo en los documentos que enviaste — el backend ya implementó una síntesis propia de ambos (pronósticos manuales + suscripción + predicción informativa algorítmica + KYC). El frontend se quedó atrás en una sola pieza: **no hay pantalla para que el usuario cree/edite/confirme su pronóstico**, que es el corazón del producto.
 
 ---
 
-## 2. Backlog unificado (Doc original + HistoriasYEpicas), con estado real
+## 2. Backlog unificado, con estado real
 
 | Épica | HU origen | Descripción | Estado |
 |---|---|---|---|
@@ -108,11 +106,54 @@ El README ya documenta el plan vigente y **se mantiene sin cambios**:
 
 ---
 
-## 7. Próximos pasos (decisiones ya tomadas — listo para ejecutar)
+## 8. Requisitos del enunciado del curso (MVP genérico) — mapeo a F1
 
-1. ~~Resolver las decisiones §4.1 y §4.2~~ ✅ Ambas resueltas: predicciones públicas (ya aplicado), pronóstico gratis SÍ se implementa.
-2. **Backend:** reenganchar `gp_gratis_id` en `verificar_pase_pronosticos` (`app/modules/acceso/dependencies.py`): admin, o pase activo, o `usuario.gp_gratis_id == gran_premio_id` del pronóstico → permitido. Si el usuario no tiene `gp_gratis_id` asignado aún, asignarle el próximo GP (misma lógica que existía antes en `verificar_acceso`, hoy removida).
-3. Construir `features/pronosticos` (crear/editar/confirmar) — el bloqueador real para que el "juego" funcione de punta a punta. Debe mostrar claramente si el usuario está usando su pronóstico gratis o su pase de temporada.
-4. Construir `features/historial` (mis pronósticos, estadísticas, ranking).
-5. Completar EP-02 (perfil/favoritos) y el disclaimer de juego responsable.
-6. Verificar de nuevo end-to-end en navegador (registro → verificar correo → pronóstico gratis en el GP asignado → intento de pronóstico en otro GP → paywall → comprar pase simulado → pronóstico ilimitado → admin registra resultado → ver puntos reflejados en historial y ranking).
+Este es el checklist de funcionalidades núcleo que compartiste, redactado en términos genéricos ("liga/equipo/partido/localía"). Es el mismo enunciado base del curso adaptado a cualquier deporte; aquí se traduce explícitamente al dominio F1 y se cruza con el estado real del código, para que quede documentado de una sola vez con todo lo demás.
+
+| # | Requisito del enunciado (genérico) | Traducción al dominio F1 | Estado |
+|---|---|---|---|
+| 1 | Registro y perfil de usuario con ligas/equipos favoritos | Registro/login (EP-01) + `piloto_favorito_id` / `escuderia_favorita_id` en el perfil (EP-02) | ✅ Backend listo · ⚠️ Frontend no expone la selección de favoritos todavía (mismo gap que §5.6) |
+| 2 | Catálogo de partidos próximos por liga, con datos básicos (equipos, fecha, localía) | Calendario de Grandes Premios: nombre, país, circuito, temporada, ronda, fecha de inicio/carrera | ✅ Backend + Frontend. "Localía" no existe como concepto en F1 (no hay local/visitante); su equivalente conceptual es el circuito/país, que ya se muestra |
+| 3 | Motor de pronóstico simple basado en reglas/estadísticas históricas (forma reciente, promedio de goles, localía) que devuelve probabilidad estimada | `app/modules/predicciones/motor.py`: combina puntos de piloto y escudería, rendimiento histórico en el circuito y forma reciente en una suma ponderada normalizada a probabilidades | ✅ Backend implementado y alineado 1:1 con este requisito · ⚠️ Ver brecha nueva abajo (no se persiste) |
+| 4 | Tabla de posiciones y resultados recientes desde una fuente de datos (API pública o dataset propio) | Clasificación de pilotos/escuderías + resultados oficiales, con sincronización real desde **TheSportsDB** (`/admin/sincronizaciones/thesportsdb`) | ✅ Backend + Frontend (admin) |
+| 5 | Panel de "aciertos vs. fallos" **del modelo** a lo largo del tiempo | Comparar la predicción algorítmica generada por el motor contra el resultado oficial real de cada GP, y trackear esa métrica en el tiempo | ❌ **No existe. Es una brecha nueva, distinta a la del §5.2** (esa es "aciertos del usuario"; esta es "aciertos del modelo/algoritmo") |
+| 6 | Dashboard administrativo para cargar/actualizar partidos y resultados | `GestionGPs`, `RegistrarResultados`, sincronización TheSportsDB | ✅ Backend + Frontend |
+| 7 | Modelado de dominio (partido, equipo, predicción, resultado), manejo de incertidumbre, métricas de evaluación del pronóstico | Ver análisis abajo | ⚠️ Parcial — falta persistir la "Predicción" como entidad |
+
+### 8.1 — Brecha nueva y estructural: la Predicción algorítmica no se persiste
+
+Este es el hallazgo más importante de este checklist. Hoy `GET /predicciones/{gp_id}` **calcula la predicción al vuelo en cada request** y la devuelve, pero **nunca la guarda en base de datos**. No existe una tabla `predicciones` ni modelo `PrediccionGP` persistido — es un valor 100% derivado, no una entidad.
+
+Esto es suficiente para el requisito #3 (mostrar una predicción), pero **no alcanza** para el #5 y el #7:
+
+- No se puede construir un "panel de aciertos vs. fallos del modelo a través del tiempo" si no queda un registro histórico de qué predijo el modelo *en el momento en que cerró el pronóstico* (antes de saber el resultado real). Recalcular la predicción después de la carrera con los mismos datos ya no es honesto — hay que congelar el snapshot.
+- El "manejo de incertidumbre" que pide el enunciado ya está parcialmente resuelto (`nivel_confianza`, `probabilidad` por piloto), pero sin persistencia no hay forma de evaluar retrospectivamente si un `nivel_confianza: alto` efectivamente acertó más que uno `bajo` — que es literalmente la métrica de evaluación que el enunciado pide.
+
+**Recomendación de modelado (para decidir, no implementado aún):**
+1. Nueva tabla `predicciones_historial` (o similar): `id`, `gran_premio_id` (FK, único por GP), `ganador_probable_id`, `podio_probable` (los 3 piloto_id en orden), `nivel_confianza`, `probabilidades` (JSON con el detalle completo), `generado_en`.
+2. Se genera y congela automáticamente en el mismo momento en que se cierra el pronóstico del GP (`fecha_inicio`), o la primera vez que se registra el resultado oficial — lo importante es que sea **antes** de conocer el resultado real, para que la comparación sea honesta.
+3. Al registrar resultados oficiales (`POST /admin/grandes-premios/{id}/resultados`), además de calificar los pronósticos de usuarios (ya lo hace), comparar `predicciones_historial` del GP contra `resultado_posiciones`: ¿acertó el ganador? ¿acertó el podio completo/parcial?
+4. Nuevo endpoint informativo (público, coherente con que predicciones ya es pública): `GET /predicciones/metricas` → aciertos totales, % de acierto de ganador, % de acierto de podio, desglosado opcionalmente por `nivel_confianza` (para poder mostrar algo como *"cuando el modelo dijo confianza alta, acertó el ganador el 80% de las veces"* — esto es exactamente el tipo de métrica de evaluación que un sitio de pronósticos real muestra para generar confianza, ver §3.2).
+5. Frontend: `PanelMetricasModelo.tsx` (podría vivir dentro de `features/predicciones` ya que es la contraparte de evaluación de esa misma feature), con una tabla/gráfico simple de aciertos por GP y el desglose por nivel de confianza.
+
+---
+
+## 9. Próximos pasos
+
+1. ~~Resolver las decisiones §4.1 y §4.2~~ ✅ Ambas resueltas: predicciones públicas, pronóstico gratis SÍ se implementa.
+2. ~~**Backend:** reenganchar `gp_gratis_id` en `verificar_pase_pronosticos`~~ ✅ Implementado en `app/modules/acceso/dependencies.py`, llamado manualmente (no como `Depends`) desde `pronosticos/router.py` en crear/editar/confirmar, porque necesita el `gran_premio_id` del cuerpo o del pronóstico ya existente.
+3. ~~Construir `features/pronosticos` (crear/editar/confirmar)~~ ✅ `pronosticosService.ts` + `MiPronostico.tsx`, con resumen antes de confirmar (HU-20) y bloqueo de edición tras confirmar.
+4. ~~Construir `features/historial` (mis pronósticos, estadísticas, ranking)~~ ✅ `MisPronosticos.tsx` (historial + estadísticas) y `Ranking.tsx` (público).
+5. Completar EP-02 (perfil/favoritos) y el disclaimer de juego responsable. **Pendiente.**
+6. **Persistir la Predicción algorítmica** (§8.1) y construir el panel de aciertos/fallos del modelo. **Pendiente** — sigue siendo el requisito del enunciado del curso con más peso académico y el más lejos de cumplirse.
+7. ~~Verificar end-to-end en navegador~~ ✅ Probado con Playwright contra el backend real: login admin → pronóstico → confirmar → historial; registro → verificar correo (código real extraído de logs) → pronóstico gratis en el GP asignado automáticamente → intento en otro GP → bloqueado con 402 correctamente.
+
+### 9.1 — Bugs reales encontrados y corregidos durante la verificación
+
+Al levantar el entorno para probar, aparecieron tres problemas que **ya existían en el repo** (no introducidos en esta sesión) y que habrían roto el MVP en cualquier máquina nueva:
+
+1. **`initdb/init.sql` (el que realmente usa Docker) estaba desincronizado del `init.sql` de la raíz** — le faltaban las columnas `correo_verificado`, `telefono`, `telefono_verificado`, `kyc_estado` y la tabla `codigos_verificacion`. Provocaba un 500 en `/auth/login` apenas se levantaba el contenedor desde cero. Corregido sincronizando ambos archivos.
+2. **El seed de usuarios de prueba (`seed_grandes_premios.sql`) no marcaba `correo_verificado = TRUE`**, así que ni siquiera el admin sembrado podía iniciar sesión con el nuevo flujo de verificación de correo. Corregido en ambas copias (raíz e `initdb/`).
+3. **`obtener_proximo_gran_premio` (usada para asignar el pronóstico gratis) ordenaba por `fecha_carrera` en vez de `fecha_inicio`.** Si el GP con `fecha_carrera` más próxima ya estaba "en curso" (plazo de pronósticos ya cerrado), un usuario nuevo recibía como pronóstico gratis un GP en el que ya no podía pronosticar — quedaba bloqueado para siempre. Corregido para filtrar/ordenar por `fecha_inicio`.
+4. **`ListaGPs.tsx` había sido reescrita (fuera de esta sesión) para leer el calendario en vivo desde TheSportsDB**, con IDs externos incompatibles con los UUID de `GranPremio` que usa el resto de la app (detalle, pronósticos, resultados, admin). Rompía la navegación calendario → detalle → pronóstico. Revertida a `calendarioService.listarCalendario()` por decisión del usuario.
+5. **El `.env` del backend no existía** en el checkout actual (sin `.gitignore` que lo explique ni `.env.example` de reemplazo) y el `.env` del frontend apuntaba a un túnel de Cloudflare ya caído. Recreados ambos con valores de desarrollo local (`VITE_API_URL=http://localhost:8001`, acorde al nuevo mapeo de puerto del `docker-compose.yaml` actual).

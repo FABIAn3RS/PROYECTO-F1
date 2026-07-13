@@ -36,13 +36,14 @@ def validar_unicidad_podio(p1: uuid.UUID | None, p2: uuid.UUID | None, p3: uuid.
 @router.post("", response_model=schemas.PronosticoOut, status_code=status.HTTP_201_CREATED)
 def crear_mi_pronostico(
     datos: schemas.PronosticoCreate,
-    usuario: Usuario = Depends(verificar_pase_pronosticos),
+    usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     # 1. Obtener GP y verificar plazo
     gp = db.query(GranPremio).filter(GranPremio.id == datos.gran_premio_id).first()
     if not gp:
         raise NoEncontrado("Gran Premio no encontrado")
+    verificar_pase_pronosticos(datos.gran_premio_id, usuario, db)
     validar_plazo_gp(gp)
 
     # 2. Validar unicidad de podio
@@ -59,7 +60,7 @@ def crear_mi_pronostico(
 @router.get("/gp/{gp_id}", response_model=schemas.PronosticoOut)
 def obtener_pronostico_de_gp(
     gp_id: uuid.UUID,
-    usuario: Usuario = Depends(verificar_pase_pronosticos),
+    usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     pronostico = crud.obtener_pronostico_usuario_gp(db, usuario.id, gp_id)
@@ -72,7 +73,7 @@ def obtener_pronostico_de_gp(
 def modificar_mi_pronostico(
     pronostico_id: uuid.UUID,
     datos: schemas.PronosticoUpdate,
-    usuario: Usuario = Depends(verificar_pase_pronosticos),
+    usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     pronostico = crud.obtener_pronostico(db, pronostico_id)
@@ -84,6 +85,8 @@ def modificar_mi_pronostico(
 
     if pronostico.confirmado:
         raise SolicitudInvalida("No se puede modificar un pronóstico que ya ha sido confirmado.")
+
+    verificar_pase_pronosticos(pronostico.gran_premio_id, usuario, db)
 
     # Obtener GP y verificar plazo
     gp = db.query(GranPremio).filter(GranPremio.id == pronostico.gran_premio_id).first()
@@ -101,7 +104,7 @@ def modificar_mi_pronostico(
 @router.post("/{pronostico_id}/confirmar", response_model=schemas.PronosticoOut)
 def confirmar_mi_pronostico(
     pronostico_id: uuid.UUID,
-    usuario: Usuario = Depends(verificar_pase_pronosticos),
+    usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     pronostico = crud.obtener_pronostico(db, pronostico_id)
@@ -113,6 +116,8 @@ def confirmar_mi_pronostico(
 
     if pronostico.confirmado:
         return pronostico
+
+    verificar_pase_pronosticos(pronostico.gran_premio_id, usuario, db)
 
     # Obtener GP y verificar plazo
     gp = db.query(GranPremio).filter(GranPremio.id == pronostico.gran_premio_id).first()

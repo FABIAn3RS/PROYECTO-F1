@@ -20,6 +20,10 @@ CREATE TABLE usuarios (
     password_hash   VARCHAR(255) NOT NULL,
     rol_id          INTEGER NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
     activo          BOOLEAN NOT NULL DEFAULT TRUE,
+    correo_verificado BOOLEAN NOT NULL DEFAULT FALSE,
+    telefono        VARCHAR(30),
+    telefono_verificado BOOLEAN NOT NULL DEFAULT FALSE,
+    kyc_estado      VARCHAR(20) NOT NULL DEFAULT 'pendiente',
 
     -- EP-02: preferencias de perfil (las FK a pilotos/escuderias se agregan más abajo con ALTER,
     -- porque esas tablas todavía no existen en este punto del script)
@@ -45,7 +49,17 @@ CREATE TABLE password_reset_tokens (
     created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE codigos_verificacion (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    usuario_id  UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    codigo      VARCHAR(6) NOT NULL,
+    expira_en   TIMESTAMP NOT NULL,
+    usado       BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX idx_reset_token ON password_reset_tokens(token);
+CREATE INDEX idx_codigos_verificacion_usuario ON codigos_verificacion(usuario_id);
 
 -- =========================================
 -- EP-03: Calendario de Grandes Premios
@@ -240,10 +254,11 @@ INSERT INTO roles (nombre, descripcion) VALUES
 -- SEED: usuario admin de prueba
 -- (password_hash de ejemplo, reemplázalo por un hash real bcrypt)
 -- =========================================
-INSERT INTO usuarios (nombre, correo, password_hash, rol_id)
+INSERT INTO usuarios (nombre, correo, password_hash, rol_id, correo_verificado)
 VALUES (
     'Admin',
     'admin@pronosticos.com',
     '$2b$10$rjT2nVyKPOG/BF985IyfHuG5z9fJZMw0DCfTRcM8eXTja.wtEqT3a',
-    (SELECT id FROM roles WHERE nombre = 'administrador')
+    (SELECT id FROM roles WHERE nombre = 'administrador'),
+    TRUE
 );

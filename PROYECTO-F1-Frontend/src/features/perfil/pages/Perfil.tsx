@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../core/hooks/useAuth';
+import { getErrorMessage } from '../../../core/api/apiError';
 import Card from '../../../shared/components/Card';
 import Button from '../../../shared/components/Button';
 import type { PaseTemporadaInfo } from '../services/perfilService';
@@ -62,6 +63,7 @@ export default function Perfil() {
           setSearchParams({});
         });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refrescarPerfil/setSearchParams no están memoizados; incluirlos reprocesaría el pago en cada render.
   }, [searchParams, usuario]);
 
   if (!usuario) return null;
@@ -106,8 +108,8 @@ export default function Perfil() {
       setTelefono('');
       setCodigoSMS('');
       await refrescarPerfil();
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.detail ?? 'Error al verificar teléfono.');
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, 'Error al verificar teléfono.'));
     } finally {
       setCargandoTelefono(false);
     }
@@ -126,8 +128,8 @@ export default function Perfil() {
       window.open(session.session_url, '_blank');
       // Simulamos que el webhook está en progreso
       await refrescarPerfil();
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.detail ?? 'Error al iniciar KYC.');
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, 'Error al iniciar KYC.'));
     } finally {
       setCargandoKyc(false);
     }
@@ -143,8 +145,8 @@ export default function Perfil() {
       await simularWebhookKyc(usuario!.id);
       setSuccessMsg('¡Simulación de Webhook Didit enviada! Identidad aprobada.');
       await refrescarPerfil();
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.detail ?? 'Error al simular webhook.');
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, 'Error al simular webhook.'));
     } finally {
       setCargandoKyc(false);
     }
@@ -169,8 +171,8 @@ export default function Perfil() {
       setSuccessMsg('Redirigiendo a la pasarela de pago...');
       // Redirigir a Stripe (o URL de simulación en sandbox)
       window.location.href = sesion.checkout_url;
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.detail ?? 'Error al crear la sesión de pago.');
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, 'Error al crear la sesión de pago.'));
     } finally {
       setCargandoCheckout(false);
     }
