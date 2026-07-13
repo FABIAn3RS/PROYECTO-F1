@@ -91,6 +91,26 @@ export async function buscarPilotoF1(nombre: string): Promise<TheSportsDbPlayer[
   return normalizarLista(data.player).filter(esPilotoF1);
 }
 
+// Caché en memoria (por nombre) para no repetir búsquedas al mostrar el mismo
+// piloto en distintas pantallas/pasos durante la sesión.
+const cacheFotoPiloto = new Map<string, string | null>();
+
+export async function obtenerFotoPilotoPorNombre(nombre: string): Promise<string | null> {
+  const clave = nombre.trim().toLowerCase();
+  if (!clave) return null;
+  if (cacheFotoPiloto.has(clave)) return cacheFotoPiloto.get(clave) ?? null;
+
+  try {
+    const resultados = await buscarPilotoF1(nombre);
+    const foto = resultados[0]?.strCutout ?? resultados[0]?.strThumb ?? null;
+    cacheFotoPiloto.set(clave, foto);
+    return foto;
+  } catch {
+    cacheFotoPiloto.set(clave, null);
+    return null;
+  }
+}
+
 export async function obtenerPilotoF1(idPiloto: string): Promise<TheSportsDbPlayer | null> {
   const { data } = await theSportsDbClient.get<{ players: TheSportsDbPlayer[] | null }>(
     '/lookupplayer.php',

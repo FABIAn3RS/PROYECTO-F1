@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { listarCalendario } from '../../calendario/services/calendarioService';
 import type { GranPremioCalendario } from '../../calendario/services/calendarioService';
+import { listarPilotos } from '../../competencia/services/competenciaService';
+import type { PilotoConEscuderia } from '../../competencia/services/competenciaService';
 import { buscarPilotoF1 } from '../../thesportsdb/services/theSportsDbService';
 import { getErrorMessage, getErrorStatus } from '../../../core/api/apiError';
-import axiosClient from '../../../core/api/axiosClient';
-import type { Piloto, Pronostico } from '../../../models';
+import type { Pronostico } from '../../../models';
 import AccesoRequerido from '../../../shared/components/AccesoRequerido';
 import Button from '../../../shared/components/Button';
 import Card from '../../../shared/components/Card';
 import Loader from '../../../shared/components/Loader';
+import PilotoAvatar from '../components/PilotoAvatar';
+import SeleccionarPilotoModal from '../components/SeleccionarPilotoModal';
+import { usePilotoFotos } from '../hooks/usePilotoFotos';
 import {
   actualizarPronostico,
   confirmarPronostico,
@@ -27,12 +31,30 @@ const CAMPOS_INICIALES: CamposPronostico = {
   piloto_vuelta_rapida_id: null,
 };
 
-const etiquetas: Array<[keyof CamposPronostico, string]> = [
-  ['piloto_p1_id', '1.º puesto'],
-  ['piloto_p2_id', '2.º puesto'],
-  ['piloto_p3_id', '3.º puesto'],
-  ['piloto_pole_id', 'Pole position'],
-  ['piloto_vuelta_rapida_id', 'Vuelta rápida'],
+interface Paso {
+  titulo: string;
+  descripcion: string;
+  campos: (keyof CamposPronostico)[];
+  etiquetas?: string[];
+}
+
+const PASOS: Paso[] = [
+  {
+    titulo: 'Podio',
+    descripcion: 'Elige quién quedará 1.º, 2.º y 3.º en la carrera.',
+    campos: ['piloto_p1_id', 'piloto_p2_id', 'piloto_p3_id'],
+    etiquetas: ['1.º', '2.º', '3.º'],
+  },
+  {
+    titulo: 'Pole position',
+    descripcion: 'Elige quién logrará la pole position en la clasificación.',
+    campos: ['piloto_pole_id'],
+  },
+  {
+    titulo: 'Vuelta rápida',
+    descripcion: 'Elige quién marcará la vuelta más rápida de la carrera.',
+    campos: ['piloto_vuelta_rapida_id'],
+  },
 ];
 
 function aCampos(pronostico: Pronostico): CamposPronostico {
@@ -43,6 +65,10 @@ function aCampos(pronostico: Pronostico): CamposPronostico {
     piloto_pole_id: pronostico.piloto_pole_id,
     piloto_vuelta_rapida_id: pronostico.piloto_vuelta_rapida_id,
   };
+}
+
+function pasoCompleto(paso: Paso, campos: CamposPronostico): boolean {
+  return paso.campos.every((campo) => Boolean(campos[campo]));
 }
 
 function OpcionPopularItem({
@@ -76,7 +102,7 @@ function OpcionPopularItem({
 
 export default function Pronosticos() {
   const [gps, setGps] = useState<GranPremioCalendario[]>([]);
-  const [pilotos, setPilotos] = useState<Piloto[]>([]);
+  const [pilotos, setPilotos] = useState<PilotoConEscuderia[]>([]);
   const [gpId, setGpId] = useState('');
   const [pronostico, setPronostico] = useState<Pronostico | null>(null);
   const [campos, setCampos] = useState<CamposPronostico>(CAMPOS_INICIALES);
@@ -90,12 +116,11 @@ export default function Pronosticos() {
   const [cargandoPopulares, setCargandoPopulares] = useState(false);
   const [fotosPilotos, setFotosPilotos] = useState<Record<string, string>>({});
   const [categoriasExpandidas, setCategoriasExpandidas] = useState<Record<string, boolean>>({});
+  const [pasoActual, setPasoActual] = useState(0);
+  const [modalAbierto, setModalAbierto] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      listarCalendario(),
-      axiosClient.get<Piloto[]>('/pilotos').then((respuesta) => respuesta.data),
-    ])
+    Promise.all([listarCalendario(), listarPilotos()])
       .then(([calendario, listaPilotos]) => {
         setGps(calendario);
         setPilotos(listaPilotos);
@@ -142,6 +167,7 @@ export default function Pronosticos() {
 
   useEffect(() => {
     setCategoriasExpandidas({});
+    setPasoActual(0);
   }, [gpId]);
 
   useEffect(() => {
@@ -212,11 +238,30 @@ export default function Pronosticos() {
     };
   }, [popularesVisibles]);
 
+  const fotos = usePilotoFotos(pilotos);
+
   const plazoFinalizado = gpSeleccionado ? new Date(gpSeleccionado.fecha_inicio) <= new Date() : true;
   const podio = [campos.piloto_p1_id, campos.piloto_p2_id, campos.piloto_p3_id].filter(Boolean);
   const podioRepetido = new Set(podio).size !== podio.length;
   const completo = Object.values(campos).every(Boolean);
   const noEditable = plazoFinalizado || pronostico?.confirmado === true;
+  const paso = PASOS[pasoActual];
+
+  function piloto(pilotoId: string | null): PilotoConEscuderia | undefined {
+    return pilotoId ? pilotos.find((p) => p.id === pilotoId) : undefined;
+  }
+
+  function guardarSeleccionPaso(nuevaSeleccion: (string | null)[]) {
+    setCampos((prev) => {
+      const copia = { ...prev };
+      paso.campos.forEach((campo, i) => {
+        copia[campo] = nuevaSeleccion[i] ?? null;
+      });
+      return copia;
+    });
+    setModalAbierto(false);
+    setExito(null);
+  }
 
   const guardar = async (confirmar: boolean) => {
     if (!gpId || noEditable || podioRepetido) return;
@@ -287,23 +332,82 @@ export default function Pronosticos() {
             {cargandoPronostico && <Loader mensaje="Cargando tu pronóstico..." />}
 
             {!cargandoPronostico && (
-              <div className="pronosticos-form">
-                {etiquetas.map(([campo, etiqueta]) => (
-                  <div key={campo} className="form-group">
-                    <label htmlFor={campo}>{etiqueta}</label>
-                    <select
-                      id={campo}
-                      value={campos[campo] ?? ''}
-                      disabled={noEditable || guardando}
-                      onChange={(e) => setCampos((actual) => ({ ...actual, [campo]: e.target.value || null }))}
-                    >
-                      <option value="">Selecciona un piloto</option>
-                      {pilotos.map((piloto) => (
-                        <option key={piloto.id} value={piloto.id}>{piloto.nombre}</option>
-                      ))}
-                    </select>
+              <>
+                <div>
+                  <h3>{paso.titulo}</h3>
+                  <p className="text-muted">{paso.descripcion}</p>
+
+                  <div className="piloto-slots">
+                    {paso.campos.map((campo, i) => {
+                      const p = piloto(campos[campo]);
+                      return (
+                        <button
+                          key={campo}
+                          type="button"
+                          className="piloto-slot"
+                          disabled={noEditable || guardando}
+                          onClick={() => setModalAbierto(true)}
+                        >
+                          <div className="piloto-slot__avatar-wrap">
+                            {p ? (
+                              <PilotoAvatar
+                                nombre={p.nombre}
+                                color={p.escuderia?.color}
+                                fotoUrl={fotos[p.id]}
+                                tamano="lg"
+                              />
+                            ) : (
+                              <div className="piloto-slot__vacio">+</div>
+                            )}
+                            {p && !noEditable && (
+                              <span className="piloto-slot__editar" aria-hidden="true">
+                                ✎
+                              </span>
+                            )}
+                          </div>
+                          {paso.etiquetas?.[i] && (
+                            <span className="piloto-slot__posicion">{paso.etiquetas[i]}</span>
+                          )}
+                          <span className="piloto-slot__nombre">{p ? p.nombre : 'Elegir piloto'}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                ))}
+
+                  <div className="wizard-dots">
+                    {PASOS.map((p, i) => (
+                      <button
+                        key={p.titulo}
+                        type="button"
+                        className={[
+                          'wizard-dot',
+                          i === pasoActual ? 'wizard-dot--activo' : '',
+                          pasoCompleto(p, campos) ? 'wizard-dot--completo' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={() => setPasoActual(i)}
+                        aria-label={p.titulo}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="wizard-nav">
+                    <Button
+                      variante="secondary"
+                      onClick={() => setPasoActual((prev) => Math.max(0, prev - 1))}
+                      disabled={pasoActual === 0}
+                    >
+                      ← Anterior
+                    </Button>
+                    <Button
+                      onClick={() => setPasoActual((prev) => Math.min(PASOS.length - 1, prev + 1))}
+                      disabled={pasoActual === PASOS.length - 1}
+                    >
+                      Siguiente →
+                    </Button>
+                  </div>
+                </div>
 
                 {podioRepetido && <p className="form-error">Un piloto no puede ocupar más de una posición del podio.</p>}
 
@@ -317,7 +421,7 @@ export default function Pronosticos() {
                     </Button>
                   </div>
                 )}
-              </div>
+              </>
             )}
           </Card>
 
@@ -380,6 +484,18 @@ export default function Pronosticos() {
             )}
           </Card>
         </div>
+      )}
+
+      {modalAbierto && (
+        <SeleccionarPilotoModal
+          titulo={paso.titulo}
+          pilotos={pilotos}
+          seleccion={paso.campos.map((campo) => campos[campo])}
+          etiquetas={paso.etiquetas}
+          fotos={fotos}
+          onGuardar={guardarSeleccionPaso}
+          onCerrar={() => setModalAbierto(false)}
+        />
       )}
     </div>
   );
