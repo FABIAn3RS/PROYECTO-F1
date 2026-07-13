@@ -42,7 +42,8 @@ def send_verification_email(to_email: str, code: str) -> bool:
     url = "https://api.resend.com/emails"
     headers = {
         "Authorization": f"Bearer {config.RESEND_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     payload = {
         "from": f"F1 Pronósticos <{config.RESEND_FROM_EMAIL}>",

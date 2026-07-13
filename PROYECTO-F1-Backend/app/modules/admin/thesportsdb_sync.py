@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 
 from sqlalchemy.orm import Session
 
@@ -15,7 +15,11 @@ F1_LEAGUE_ID = "4370"
 
 def _obtener(ruta: str, **params) -> dict:
     url = f"{THESPORTSDB_BASE_URL.rstrip('/')}/{THESPORTSDB_API_KEY}{ruta}?{urlencode(params)}"
-    with urlopen(url, timeout=30) as respuesta:
+    req = Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    )
+    with urlopen(req, timeout=30) as respuesta:
         return json.loads(respuesta.read().decode("utf-8"))
 
 
