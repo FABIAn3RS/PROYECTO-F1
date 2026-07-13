@@ -1,13 +1,12 @@
 steps:
-
 - name: gcr.io/cloud-builders/docker
   args:
   - build
   - -t
-  - us-central1-docker.pkg.dev/project-37ca8556-4c5d-47bd-9fd/f1-frontend-clean/app:$COMMIT_SHA
+  - us-central1-docker.pkg.dev/project-37ca8556-4c5d-47bd-9fd/f1-frontend-clean/app:v1
   - -f
   - PROYECTO-F1-Frontend/Dockerfile
   - PROYECTO-F1-Frontend
 
 images:
-- us-central1-docker.pkg.dev/project-37ca8556-4c5d-47bd-9fd/f1-frontend-clean/app:$COMMIT_SHA
+- us-central1-docker.pkg.dev/project-37ca8556-4c5d-47bd-9fd/f1-frontend-clean/app:v1
