@@ -1,6 +1,18 @@
 import uuid
+from collections import Counter
+
 from sqlalchemy.orm import Session
+
+from app.modules.pilotos.models import Piloto
 from app.modules.pronosticos import models, schemas
+
+CATEGORIAS_POPULARES = [
+    ("p1", "piloto_p1_id", "1.º puesto"),
+    ("p2", "piloto_p2_id", "2.º puesto"),
+    ("p3", "piloto_p3_id", "3.º puesto"),
+    ("pole", "piloto_pole_id", "Pole position"),
+    ("vuelta_rapida", "piloto_vuelta_rapida_id", "Vuelta rápida"),
+]
 
 
 def obtener_pronostico(db: Session, pronostico_id: uuid.UUID) -> models.Pronostico | None:
@@ -51,3 +63,43 @@ def confirmar_pronostico(db: Session, db_pronostico: models.Pronostico) -> model
     db.commit()
     db.refresh(db_pronostico)
     return db_pronostico
+
+
+def obtener_pronosticos_populares(db: Session, gp_id: uuid.UUID) -> schemas.PronosticosPopularesOut:
+    pronosticos = (
+        db.query(models.Pronostico)
+        .filter(
+            models.Pronostico.gran_premio_id == gp_id,
+            models.Pronostico.confirmado == True,
+        )
+        .all()
+    )
+    total = len(pronosticos)
+    categorias: list[schemas.CategoriaPopularOut] = []
+
+    for clave, campo, etiqueta in CATEGORIAS_POPULARES:
+        conteo = Counter(
+            getattr(pronostico, campo)
+            for pronostico in pronosticos
+            if getattr(pronostico, campo) is not None
+        )
+        opciones: list[schemas.OpcionPopularOut] = []
+        for piloto_id, votos in conteo.most_common(3):
+            piloto = db.query(Piloto).filter(Piloto.id == piloto_id).first()
+            opciones.append(
+                schemas.OpcionPopularOut(
+                    piloto_id=piloto_id,
+                    piloto_nombre=piloto.nombre if piloto else "Desconocido",
+                    votos=votos,
+                    porcentaje=round((votos / total) * 100, 1) if total else 0,
+                )
+            )
+        categorias.append(
+            schemas.CategoriaPopularOut(categoria=clave, etiqueta=etiqueta, opciones=opciones)
+        )
+
+    return schemas.PronosticosPopularesOut(
+        gran_premio_id=gp_id,
+        total_confirmados=total,
+        categorias=categorias,
+    )

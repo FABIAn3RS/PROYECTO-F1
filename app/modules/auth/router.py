@@ -10,7 +10,7 @@ from app.modules.auth import crud, schemas, models
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
 
-from app.core.email import send_verification_email
+from app.core.email import send_verification_email, send_password_reset_email
 
 
 # HU-01: Registro de usuario
@@ -86,9 +86,8 @@ def forgot_password(datos: schemas.ForgotPasswordRequest, db: Session = Depends(
     usuario = crud.get_usuario_by_correo(db, datos.correo)
     if usuario:
         token = crud.crear_reset_token(db, usuario)
-        # En producción: enviar `token` por correo, no devolverlo en la respuesta.
-        return {"detail": "Si el correo existe, se generó un token", "token_debug": token}
-    return {"detail": "Si el correo existe, se generó un token"}
+        send_password_reset_email(usuario.correo, token)
+    return {"detail": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."}
 
 
 # HU-03: Establecer nueva contraseña con el token recibido

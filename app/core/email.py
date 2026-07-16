@@ -70,3 +70,70 @@ def send_verification_email(to_email: str, code: str) -> bool:
     except Exception as e:
         logger.error(f"Error sending email via Resend: {str(e)}")
         return False
+
+
+def send_password_reset_email(to_email: str, token: str) -> bool:
+    """
+    Sends a password reset link using the Resend API.
+    If RESEND_API_KEY is 'mock' or not configured, it logs the reset link to stdout/console.
+    """
+    reset_url = f"{config.FRONTEND_URL}/restablecer-password?token={token}"
+    subject = "Recuperación de cuenta - F1 Pronósticos"
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #e10600; text-align: center;">F1 Pronósticos Deportivos</h2>
+        <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;" />
+        <p>Hola,</p>
+        <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta. Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+        <p style="text-align: center; margin: 25px 0;">
+            <a href="{reset_url}" style="display: inline-block; background-color: #e10600; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold;">
+                Restablecer contraseña
+            </a>
+        </p>
+        <p style="font-size: 13px; color: #666666;">Este enlace expirará en 30 minutos. Si no solicitaste recuperar tu cuenta, puedes ignorar este correo de forma segura.</p>
+        <p style="font-size: 12px; color: #888888; word-break: break-all;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br />{reset_url}</p>
+        <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;" />
+        <p style="font-size: 11px; color: #999999; text-align: center;">F1 Pronósticos &copy; 2026. Todos los derechos reservados.</p>
+    </div>
+    """
+
+    if not config.RESEND_API_KEY or config.RESEND_API_KEY == "mock":
+        print("\n" + "=" * 60)
+        print(f" MOCK EMAIL SENT TO: {to_email}")
+        print(f" SUBJECT: {subject}")
+        print(f" RESET URL: {reset_url}")
+        print("=" * 60 + "\n")
+        logger.info(f"[MOCK EMAIL] Sent password reset link to {to_email}")
+        return True
+
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {config.RESEND_API_KEY}",
+        "Content-Type": "application/json",
+        "User-Agent": "F1PronosticosBackend/1.0",
+    }
+    payload = {
+        "from": f"F1 Pronósticos <{config.RESEND_FROM_EMAIL}>",
+        "to": [to_email],
+        "subject": subject,
+        "html": html_content,
+    }
+
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = response.read().decode("utf-8")
+            logger.info(f"Resend password reset email sent successfully: {res_body}")
+            return True
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8")
+        logger.error(f"HTTP Error sending password reset email via Resend: {e.code} - {err_body}")
+        return False
+    except Exception as e:
+        logger.error(f"Error sending password reset email via Resend: {str(e)}")
+        return False

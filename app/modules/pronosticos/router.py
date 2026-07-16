@@ -56,6 +56,18 @@ def crear_mi_pronostico(
     return crud.crear_pronostico(db, usuario.id, datos)
 
 
+@router.get("/gp/{gp_id}/populares", response_model=schemas.PronosticosPopularesOut)
+def obtener_pronosticos_populares_de_gp(
+    gp_id: uuid.UUID,
+    usuario: Usuario = Depends(verificar_pase_pronosticos),
+    db: Session = Depends(get_db),
+):
+    gp = db.query(GranPremio).filter(GranPremio.id == gp_id).first()
+    if not gp:
+        raise NoEncontrado("Gran Premio no encontrado")
+    return crud.obtener_pronosticos_populares(db, gp_id)
+
+
 @router.get("/gp/{gp_id}", response_model=schemas.PronosticoOut)
 def obtener_pronostico_de_gp(
     gp_id: uuid.UUID,

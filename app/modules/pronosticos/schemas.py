@@ -34,3 +34,22 @@ class PronosticoOut(PronosticoBase):
 
     class Config:
         from_attributes = True
+
+
+class OpcionPopularOut(BaseModel):
+    piloto_id: uuid.UUID
+    piloto_nombre: str
+    votos: int
+    porcentaje: float
+
+
+class CategoriaPopularOut(BaseModel):
+    categoria: str
+    etiqueta: str
+    opciones: list[OpcionPopularOut]
+
+
+class PronosticosPopularesOut(BaseModel):
+    gran_premio_id: uuid.UUID
+    total_confirmados: int
+    categorias: list[CategoriaPopularOut]

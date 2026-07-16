@@ -57,6 +57,15 @@ class ResetPasswordRequest(BaseModel):
     token: str
     nueva_password: str = Field(min_length=8, max_length=72)
 
+    @field_validator("nueva_password")
+    @classmethod
+    def password_segura(cls, v: str) -> str:
+        if not any(c.isupper() for c in v):
+            raise ValueError("La contraseña debe tener al menos una mayúscula")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("La contraseña debe tener al menos un número")
+        return v
+
 
 class VerifyEmailRequest(BaseModel):
     correo: EmailStr

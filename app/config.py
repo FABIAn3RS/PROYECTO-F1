@@ -25,6 +25,7 @@ THESPORTSDB_BASE_URL = os.getenv("THESPORTSDB_BASE_URL", "https://www.thesportsd
 # Resend Email Verification
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "mock")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
 
 # Didit KYC Identity Verification
 DIDIT_CLIENT_ID = os.getenv("DIDIT_CLIENT_ID", "")

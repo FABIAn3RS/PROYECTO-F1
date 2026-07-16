@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.core.security import get_current_admin
 from app.core.exceptions import NoEncontrado, SolicitudInvalida
-from app.modules.auth.models import Usuario
+from app.modules.auth.models import Usuario, Rol
 from app.modules.calendario.models import GranPremio
 from app.modules.escuderias.models import Escuderia
 from app.modules.pilotos.models import Piloto
