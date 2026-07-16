@@ -19,13 +19,14 @@ def obtener_proximo_gran_premio(db: Session) -> models.GranPremio | None:
     """
     Usado por el módulo `acceso` para asignar la carrera gratis:
     el próximo GP a correrse, tomando el de fecha_carrera más cercana
-    que todavía no ha ocurrido.
+    que todavía no ha ocurrido y no ha sido finalizado.
     """
     from datetime import datetime
 
     return (
         db.query(models.GranPremio)
         .filter(models.GranPremio.fecha_carrera >= datetime.now())
+        .filter(models.GranPremio.finalizado == False)
         .order_by(models.GranPremio.fecha_carrera.asc())
         .first()
     )

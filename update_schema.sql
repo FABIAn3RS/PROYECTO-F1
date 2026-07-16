@@ -4,6 +4,9 @@ ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono VARCHAR(30);
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono_verificado BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS kyc_estado VARCHAR(20) NOT NULL DEFAULT 'pendiente';
 
+-- Add columns to grandes_premios table if they do not exist
+ALTER TABLE grandes_premios ADD COLUMN IF NOT EXISTS finalizado BOOLEAN NOT NULL DEFAULT FALSE;
+
 -- Create codigos_verificacion table
 CREATE TABLE IF NOT EXISTS codigos_verificacion (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

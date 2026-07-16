@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, text
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -16,6 +16,7 @@ class GranPremio(Base):
     ronda = Column(Integer, nullable=False)
     fecha_inicio = Column(DateTime, nullable=False)
     fecha_carrera = Column(DateTime, nullable=False)
+    finalizado = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

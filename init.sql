@@ -73,6 +73,7 @@ CREATE TABLE grandes_premios (
     ronda           INTEGER NOT NULL,                -- número de carrera en la temporada, para ordenar
     fecha_inicio    TIMESTAMP NOT NULL,               -- inicio del fin de semana (prácticas)
     fecha_carrera   TIMESTAMP NOT NULL,               -- fecha/hora de la carrera
+    finalizado      BOOLEAN NOT NULL DEFAULT FALSE,
 
     created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMP NOT NULL DEFAULT NOW(),

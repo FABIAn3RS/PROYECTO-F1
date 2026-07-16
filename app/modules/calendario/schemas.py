@@ -19,6 +19,7 @@ class GranPremioBase(BaseModel):
     ronda: int
     fecha_inicio: datetime
     fecha_carrera: datetime
+    finalizado: bool
 
     class Config:
         from_attributes = True
@@ -26,6 +27,8 @@ class GranPremioBase(BaseModel):
     @computed_field
     @property
     def estado(self) -> EstadoGP:
+        if self.finalizado:
+            return EstadoGP.FINALIZADO
         # HU-10: se calcula al vuelo, no se guarda en BD
         ahora = datetime.now(self.fecha_inicio.tzinfo)
         if ahora < self.fecha_inicio:

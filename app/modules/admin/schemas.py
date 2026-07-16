@@ -23,6 +23,7 @@ class GranPremioUpdate(BaseModel):
     ronda: int | None = None
     fecha_inicio: datetime | None = None
     fecha_carrera: datetime | None = None
+    finalizado: bool | None = None
 
 
 class ResultadoOficialCreate(BaseModel):
