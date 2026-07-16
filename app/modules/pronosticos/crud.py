@@ -103,3 +103,42 @@ def obtener_pronosticos_populares(db: Session, gp_id: uuid.UUID) -> schemas.Pron
         total_confirmados=total,
         categorias=categorias,
     )
+
+
+def calcular_aciertos(db: Session, p: models.Pronostico) -> int:
+    if not p.confirmado:
+        return 0
+
+    from app.modules.resultados.models import ResultadoOficial, ResultadoPosicion
+
+    resultado = db.query(ResultadoOficial).filter(ResultadoOficial.gran_premio_id == p.gran_premio_id).first()
+    if not resultado:
+        return 0
+
+    posiciones = db.query(ResultadoPosicion).filter(ResultadoPosicion.resultado_id == resultado.id).all()
+    pos_dict = {pos.posicion: pos.piloto_id for pos in posiciones}
+    pole_pilot_id = next((pos.piloto_id for pos in posiciones if pos.es_pole), None)
+    vr_pilot_id = next((pos.piloto_id for pos in posiciones if pos.es_vuelta_rapida), None)
+
+    aciertos = 0
+    if p.piloto_p1_id and pos_dict.get(1) == p.piloto_p1_id:
+        aciertos += 1
+    if p.piloto_p2_id and pos_dict.get(2) == p.piloto_p2_id:
+        aciertos += 1
+    if p.piloto_p3_id and pos_dict.get(3) == p.piloto_p3_id:
+        aciertos += 1
+    if p.piloto_pole_id and p.piloto_pole_id == pole_pilot_id:
+        aciertos += 1
+    if p.piloto_vuelta_rapida_id and p.piloto_vuelta_rapida_id == vr_pilot_id:
+        aciertos += 1
+
+    return aciertos
+
+
+def enriquecer_pronostico(db: Session, p: models.Pronostico) -> schemas.PronosticoOut:
+    aciertos = calcular_aciertos(db, p)
+    out = schemas.PronosticoOut.model_validate(p)
+    out.aciertos = aciertos
+    out.gran_premio_nombre = p.gran_premio.nombre if p.gran_premio else None
+    out.gran_premio_finalizado = p.gran_premio.finalizado if p.gran_premio else False
+    return out

@@ -53,7 +53,8 @@ def crear_mi_pronostico(
     if existente:
         raise SolicitudInvalida("Ya has creado un pronóstico para este Gran Premio. Usa PUT para editarlo.")
 
-    return crud.crear_pronostico(db, usuario.id, datos)
+    db_res = crud.crear_pronostico(db, usuario.id, datos)
+    return crud.enriquecer_pronostico(db, db_res)
 
 
 @router.get("/gp/{gp_id}/populares", response_model=schemas.PronosticosPopularesOut)
@@ -77,7 +78,7 @@ def obtener_pronostico_de_gp(
     pronostico = crud.obtener_pronostico_usuario_gp(db, usuario.id, gp_id)
     if not pronostico:
         raise NoEncontrado("No tienes ningún pronóstico creado para este Gran Premio.")
-    return pronostico
+    return crud.enriquecer_pronostico(db, pronostico)
 
 
 @router.put("/{pronostico_id}", response_model=schemas.PronosticoOut)
@@ -107,7 +108,8 @@ def modificar_mi_pronostico(
     p3 = datos.piloto_p3_id if datos.piloto_p3_id is not None else pronostico.piloto_p3_id
     validar_unicidad_podio(p1, p2, p3)
 
-    return crud.actualizar_pronostico(db, pronostico, datos)
+    db_res = crud.actualizar_pronostico(db, pronostico, datos)
+    return crud.enriquecer_pronostico(db, db_res)
 
 
 @router.post("/{pronostico_id}/confirmar", response_model=schemas.PronosticoOut)
@@ -124,7 +126,7 @@ def confirmar_mi_pronostico(
         raise SinPermisos("No tienes permisos para confirmar este pronóstico.")
 
     if pronostico.confirmado:
-        return pronostico
+        return crud.enriquecer_pronostico(db, pronostico)
 
     # Obtener GP y verificar plazo
     gp = db.query(GranPremio).filter(GranPremio.id == pronostico.gran_premio_id).first()
@@ -135,4 +137,5 @@ def confirmar_mi_pronostico(
                 pronostico.piloto_pole_id, pronostico.piloto_vuelta_rapida_id]):
         raise SolicitudInvalida("Debes completar todas las predicciones del pronóstico antes de confirmarlo.")
 
-    return crud.confirmar_pronostico(db, pronostico)
+    db_res = crud.confirmar_pronostico(db, pronostico)
+    return crud.enriquecer_pronostico(db, db_res)

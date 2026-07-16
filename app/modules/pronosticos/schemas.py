@@ -29,6 +29,9 @@ class PronosticoOut(PronosticoBase):
     usuario_id: uuid.UUID
     confirmado: bool
     puntos_obtenidos: int
+    gran_premio_nombre: str | None = None
+    gran_premio_finalizado: bool | None = None
+    aciertos: int = 0
     created_at: datetime
     updated_at: datetime
 

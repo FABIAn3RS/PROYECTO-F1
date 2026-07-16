@@ -34,7 +34,9 @@ def obtener_mis_pronosticos(
     db: Session = Depends(get_db)
 ):
     # EP-07: Historial de pronósticos (HU-23)
-    return db.query(Pronostico).filter(Pronostico.usuario_id == usuario.id).all()
+    pronosticos = db.query(Pronostico).filter(Pronostico.usuario_id == usuario.id).all()
+    from app.modules.pronosticos.crud import enriquecer_pronostico
+    return [enriquecer_pronostico(db, p) for p in pronosticos]
 
 
 @router.get("/me/estadisticas", response_model=schemas.EstadisticasOut)
