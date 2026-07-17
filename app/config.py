@@ -27,8 +27,9 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", "mock")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
 
-# Didit KYC Identity Verification
-DIDIT_CLIENT_ID = os.getenv("DIDIT_CLIENT_ID", "")
-DIDIT_CLIENT_SECRET = os.getenv("DIDIT_CLIENT_SECRET", "")
-DIDIT_API_URL = os.getenv("DIDIT_API_URL", "https://apix.didit.protocol")  # Default to sandbox
 
+# Didit KYC Identity Verification (API v3 - autenticación por API key)
+DIDIT_API_KEY = os.getenv("DIDIT_API_KEY", "mock")
+DIDIT_WORKFLOW_ID = os.getenv("DIDIT_WORKFLOW_ID", "")
+DIDIT_WEBHOOK_SECRET = os.getenv("DIDIT_WEBHOOK_SECRET", "")
+DIDIT_BASE_URL = os.getenv("DIDIT_BASE_URL", "https://verification.didit.me/v3")

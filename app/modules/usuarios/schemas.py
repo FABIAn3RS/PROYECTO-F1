@@ -47,6 +47,7 @@ class VerificarTelefonoRequest(BaseModel):
 
 class KycSessionOut(BaseModel):
     session_id: str
-    session_url: str
-    token: str
+    url: str
+    session_token: str | None = None
+    status: str
 
