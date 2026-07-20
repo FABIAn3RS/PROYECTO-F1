@@ -1,0 +1,76 @@
+* **FABIAn3RS** (3 days ago): prueba funcionamiento kyc
+* **FABIAn3RS** (3 days ago): feat: Update header titles for Calendario and Pronosticos pages
+* **FABIAn3RS** (4 days ago): Historial
+* **FABIAn3RS** (4 days ago): implementacion ranking
+* **FABIAn3RS** (4 days ago): Merge branch 'master' of https://github.com/FABIAn3RS/PROYECTO-F1
+* **ElOscurito** (6 days ago): feat: Agregar componentes de selecci├│n de piloto y avatar, junto con el hook para cargar fotos
+* **Johandry Viles** (7 days ago): feat: Implementacion de Pronosticos Populares
+* **Johandry Viles** (7 days ago): feat: Primer implementacion para Recuperar Contrasena
+* **Johandry Viles** (7 days ago): fix: Relaciones con los dise├▒os de botones
+* **Johandry Viles** (7 days ago): fix: Arreglo del Sidebar vertical a horizontal
+* **FABIAn3RS** (7 days ago): implementacion stripe
+* **FABIAn3RS** (7 days ago): Merge branch 'master' of https://github.com/FABIAn3RS/PROYECTO-F1
+* **FABIAn3RS** (7 days ago): sega
+* **Fabi├ín Rezabala** (7 days ago): Update cloudbuild.yaml
+* **Fabi├ín Rezabala** (7 days ago): Update Dockerfile
+* **FABIAn3RS** (7 days ago): 4K
+* **Fabi├ín Rezabala** (7 days ago): Update cloudbuild.yaml
+* **Fabi├ín Rezabala** (7 days ago): Update cloudbuild.yaml
+* **Fabi├ín Rezabala** (7 days ago): Create cloudbuild.yaml
+* **Fabi├ín Rezabala** (7 days ago): Rename nginx.conf to nginx.conf.template
+* **Fabi├ín Rezabala** (7 days ago): Update nginx.conf
+* **Fabi├ín Rezabala** (7 days ago): Update Dockerfile
+* **FABIAn3RS** (7 days ago): test nuevo pipeline
+* **FABIAn3RS** (7 days ago): fix: update header title and Docker image tag for consistency
+* **Fabi├ín Rezabala** (7 days ago): Create cloudbuild.yaml
+* **Fabi├ín Rezabala** (7 days ago): Update nginx.conf
+* **Fabi├ín Rezabala** (7 days ago): Update Dockerfile
+* **FABIAn3RS** (7 days ago): Commit de prueba vac├¡o
+* **FABIAn3RS** (7 days ago): fix: update header title to enhance user engagement
+* **FABIAn3RS** (7 days ago): refactor: update nginx configuration to use fixed port and improve cache headers
+* **FABIAn3RS** (7 days ago): mejora interfaz
+* **FABIAn3RS** (7 days ago): actualizacion
+* **FABIAn3RS** (7 days ago): test: confirmar CI/CD funcionando
+* **FABIAn3RS** (7 days ago): test: confirmar CI/CD funcionando
+* **FABIAn3RS** (7 days ago): test: confirmar CI/CD funcionando
+* **FABIAn3RS** (7 days ago): test: retry deploy 2
+* **FABIAn3RS** (7 days ago): test: trigger CI/CD deploy
+* **Fabi├ín Rezabala** (7 days ago): Add files via upload
+* **Fabi├ín Rezabala** (7 days ago): Update and rename nginx.conf.template to nginx.conf
+* **Fabi├ín Rezabala** (7 days ago): Refactor Dockerfile for improved clarity and functionality
+* **Fabi├ín Rezabala** (7 days ago): Delete .github/workflows directory
+* **ElOscurito** (7 days ago): Agregar ruta p├║blica para predicciones y actualizar navegaci├│n en Navbar + Plan MVP
+* **Xmarcelo-05** (7 days ago):     - Backend:       - Creada tabla y modelo 'codigos_verificacion' para validacion de registro por correo.       - Agregado soporte para envio de emails mediante Resend en 'app/core/email.py'.       - Agregada integracion base para sesiones de identidad KYC mediante Didit en 'app/core/didit.py'.       - Implementado webhook de Didit '/users/webhooks/didit' para aprobacion/rechazo asincrono.       - Modificado login para restringir accesos a usuarios con correo verificado.       - Protegido el checkout de pase de temporada restringiendo compras si no se verifica telefono ni KYC.       - Agregado endpoint GET '/acceso/pase' para conocer el estado de la suscripcion.
+* **Fabi├ín Rezabala** (8 days ago): Update deployment configuration for project ID and service
+* **Fabi├ín Rezabala** (8 days ago): Update deploy.yaml
+* **Fabi├ín Rezabala** (8 days ago): Update deploy.yaml
+* **Fabi├ín Rezabala** (8 days ago): Update deploy.yaml
+* **Fabi├ín Rezabala** (8 days ago): Change Docker build context in deploy workflow
+* **Fabi├ín Rezabala** (8 days ago): Delete nginx.conf.template
+* **Fabi├ín Rezabala** (8 days ago): Delete dockerfile
+* **Fabi├ín Rezabala** (8 days ago): Create nginx.conf.template
+* **Fabi├ín Rezabala** (8 days ago): Add Dockerfile for multi-stage build with Nginx
+* **Fabi├ín Rezabala** (8 days ago): Update Cloud Run deployment workflow configuration
+* **Fabi├ín Rezabala** (8 days ago): Create google-cloudrun-docker.yml
+* **Fabi├ín Rezabala** (8 days ago): Update and rename nginx.conf to nginx.conf.template
+* **Fabi├ín Rezabala** (8 days ago): Create nginx.conf
+* **Fabi├ín Rezabala** (8 days ago): Create dockerfile
+* **FABIAn3RS** (8 days ago): feat: add initial SQL scripts for database schema and seed data
+* **FABIAn3RS** (8 days ago): cambios de funcionalidad al main
+* **FABIAn3RS** (8 days ago): la api de obtencion de datos se movio al backend y ahora se sincroniza con la db directamente (el admin puede manipular esos datos aun y puede activar la sincronizacion manualmente)
+* **ElOscurito** (10 days ago): feat(predicciones): implement prediction algorithms and CRUD operations
+* **JohandryViles** (11 days ago): Integracion de API TheSportsDB
+* **Johandry Viles** (11 days ago): feat: Cambio del nombre del Proyecto
+* **Fabi├ín Rezabala** (11 days ago): Rename .env.example to .env
+* **ElOscurito** (11 days ago): Doc quitado
+* **ElOscurito** (11 days ago): Implementaci├│n del MVP por parte del frontend
+* **Johandry Viles** (12 days ago): Update: Cambio del Stack del Proyecto
+* **Leandro Veliz Ponce** (13 days ago): Actualizaci├│n del contexto del sistema y las descripciones de los contenedores.
+* **JoseAndresBruh** (13 days ago): Fix formatting issue in README.md
+* **JoseAndresBruh** (13 days ago): Fix formatting in README.md class diagram
+* **JoseAndresBruh** (13 days ago): Update README with domain model diagram
+* **Johandry Viles** (2 weeks ago): Flujo-Usuario-Admin
+* **Leandro Veliz Ponce** (2 weeks ago): Estructura del proyecto
+* **Leandro Veliz Ponce** (2 weeks ago): Diamagrama Arquitectonico
+* **FABIAn3RS** (3 weeks ago): feat: initialize Angular application with basic structure and routing
+* **FABIAn3RS** (3 weeks ago): framework
