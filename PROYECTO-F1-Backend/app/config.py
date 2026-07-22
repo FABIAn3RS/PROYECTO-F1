@@ -12,10 +12,10 @@ if not DATABASE_URL:
     db_port = os.getenv("POSTGRES_PORT", "5432")
     db_name = os.getenv("POSTGRES_DB", "pronosticos_deportivos")
     
-    if db_password:
-        DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    else:
-        DATABASE_URL = f"postgresql://{db_user}@{db_host}:{db_port}/{db_name}"
+    if not db_password:
+        raise ValueError("POSTGRES_PASSWORD environment variable is required to ensure database password protection.")
+        
+    DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
 # JWT
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-cambiame")
