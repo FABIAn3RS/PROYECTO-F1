@@ -7,8 +7,8 @@ RUN groupadd -g 1000 appuser && \
 WORKDIR /app
 
 COPY requirements.txt .
-# Use --only-binary :all: to prevent the execution of arbitrary setup scripts during package installation
-RUN pip install --no-cache-dir --only-binary :all: -r requirements.txt
+# Use --only-binary :all: and --require-hashes to prevent package tampering and setup script execution
+RUN pip install --no-cache-dir --only-binary :all: --require-hashes -r requirements.txt
 
 COPY app ./app
 RUN chown -R appuser:appuser /app
