@@ -23,7 +23,7 @@ VALUES
         '99999999-9999-9999-9999-999999999999',
         'Admin',
         'admin@pronosticos.com',
-        '$2b$12$6S4lxkDQ3JvdWIHB3PGjrODVjVKAt/Nb4iQoeZYIdmMfE/bz2LQSq', -- password123
+        crypt('password123', gen_salt('bf', 12)), -- password123
         (SELECT id FROM roles WHERE nombre = 'administrador'),
         TRUE,
         NOW() - INTERVAL '30 days', 
@@ -34,7 +34,7 @@ VALUES
         'a1111111-1111-1111-1111-111111111111',
         'Juan Pérez',
         'juan.perez@example.com',
-        '$2b$12$6S4lxkDQ3JvdWIHB3PGjrODVjVKAt/Nb4iQoeZYIdmMfE/bz2LQSq', -- password123
+        crypt('password123', gen_salt('bf', 12)), -- password123
         (SELECT id FROM roles WHERE nombre = 'usuario'),
         TRUE,
         NOW() - INTERVAL '15 days',
@@ -45,7 +45,7 @@ VALUES
         'a2222222-2222-2222-2222-222222222222',
         'María López',
         'maria.lopez@example.com',
-        '$2b$12$6S4lxkDQ3JvdWIHB3PGjrODVjVKAt/Nb4iQoeZYIdmMfE/bz2LQSq', -- password123
+        crypt('password123', gen_salt('bf', 12)), -- password123
         (SELECT id FROM roles WHERE nombre = 'usuario'),
         TRUE,
         NOW() - INTERVAL '10 days',

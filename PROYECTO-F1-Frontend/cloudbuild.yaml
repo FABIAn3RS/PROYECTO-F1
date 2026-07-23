@@ -6,7 +6,7 @@ steps:
       - '--build-arg'
       - 'VITE_API_URL=https://champions-magic-larry-tent.trycloudflare.com'
       - '--build-arg'
-      - 'VITE_THESPORTSDB_API_KEY=123'
+      - 'VITE_THESPORTSDB_API_VAL=123'
       - '--build-arg'
       - 'VITE_THESPORTSDB_BASE_URL=https://www.thesportsdb.com/api/v1/json'
       - '-t'

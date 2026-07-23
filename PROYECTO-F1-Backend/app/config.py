@@ -4,10 +4,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Base de datos
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://pronosticos_user:pronosticos_pass@localhost:5432/pronosticos_deportivos",
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    db_user = os.getenv("POSTGRES_USER", "pronosticos_user")
+    db_password = os.getenv("POSTGRES_PASSWORD")
+    db_host = os.getenv("POSTGRES_HOST", "localhost")
+    db_port = os.getenv("POSTGRES_PORT", "5432")
+    db_name = os.getenv("POSTGRES_DB", "pronosticos_deportivos")
+    
+    if not db_password:
+        raise ValueError("POSTGRES_PASSWORD environment variable is required to ensure database password protection.")
+        
+    DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
 # JWT
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-cambiame")

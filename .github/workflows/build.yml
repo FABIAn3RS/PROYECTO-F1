@@ -1,0 +1,49 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      # 1. Configurar Node.js y ejecutar pruebas de Frontend (Genera lcov.info)
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'PROYECTO-F1-Frontend/package-lock.json'
+      - name: Install Frontend deps & run tests
+        run: |
+          cd PROYECTO-F1-Frontend
+          npm ci --ignore-scripts
+          npm run test
+
+      # 2. Configurar Python y ejecutar pruebas de Backend (Genera coverage.xml)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'PROYECTO-F1-Backend/requirements.txt'
+      - name: Install Backend deps & run tests
+        env:
+          POSTGRES_PASSWORD: dummy_test_password
+        run: |
+          cd PROYECTO-F1-Backend
+          pip install --only-binary :all: --require-hashes -r requirements.txt
+          python -m pytest --cov=app --cov-report=xml
+
+      # 3. Ejecutar escaneo de SonarQube
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

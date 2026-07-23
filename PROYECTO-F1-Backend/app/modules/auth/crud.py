@@ -61,8 +61,7 @@ def actualizar_password(db: Session, usuario: models.Usuario, nueva_password: st
 
 
 def crear_codigo_verificacion(db: Session, usuario_id) -> str:
-    import random
-    codigo = "".join(random.choices("0123456789", k=6))
+    codigo = "".join(secrets.choice("0123456789") for _ in range(6))
     
     # Desactivar cualquier código anterior activo del mismo usuario
     db.query(models.CodigoVerificacion).filter(
