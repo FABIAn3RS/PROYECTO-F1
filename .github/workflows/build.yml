@@ -5,6 +5,7 @@ on:
       - master
   pull_request:
     types: [opened, synchronize, reopened]
+
 jobs:
   sonarqube:
     name: SonarQube
@@ -21,6 +22,7 @@ jobs:
           node-version: 20
           cache: 'npm'
           cache-dependency-path: 'PROYECTO-F1-Frontend/package-lock.json'
+
       - name: Install Frontend deps & run tests
         run: |
           cd PROYECTO-F1-Frontend
@@ -34,6 +36,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: 'PROYECTO-F1-Backend/requirements.txt'
+
       - name: Install Backend deps & run tests
         env:
           POSTGRES_PASSWORD: dummy_test_password
@@ -44,7 +47,7 @@ jobs:
 
       # 3. Ejecutar escaneo de SonarQube
       - name: SonarQube Scan
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
