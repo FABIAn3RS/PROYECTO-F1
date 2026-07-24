@@ -36,6 +36,8 @@ Para facilitar la evaluación interactiva del flujo de seguridad transaccional y
 
 PronoStats es una solución web orientada a la analítica predictiva descriptiva y la gamificación de pronósticos basados en el campeonato mundial de Fórmula 1. 
 
+PronoStats es una solución web orientada a la analítica predictiva descriptiva y la gamificación de pronósticos basados en el campeonato mundial de Fórmula 1. 
+
 La arquitectura cliente-servidor se estructuró aplicando principios de **Diseño Orientado al Dominio (DDD-Lite)** en el backend (FastAPI). La lógica de negocio no se centraliza en enrutadores planos, sino que se fragmenta en submódulos autónomos ubicados en el directorio `app/modules/`, alineados directamente con las Épicas del Product Backlog ágil:
 * **`auth/` (EP-01):** Cifrado asimétrico (bcrypt), emisión de JWT y ciclo de sesiones de usuario.
 * **`usuarios/` (EP-02):** Preferencias, mutación del perfil y asignación de escuderías/pilotos favoritos.
@@ -120,10 +122,39 @@ El proyecto cumple con las normativas avanzadas de Ecosistemas DevOps de la asig
 
 ## 7. Gestión Ágil, Retrospectiva y Adaptabilidad
 
-El flujo del equipo se adhirió a las metodologías ágiles priorizadas. El Product Backlog inicial fue categorizado utilizando las dimensiones de *T-Shirt Sizing* y el marco de priorización estricto *MoSCoW* (Must, Should, Could).
+El equipo adoptó un marco de gestión ágil soportado por la herramienta **GitHub Projects** (@FABIAn3RS's F1 PRJT), organizando el Product Backlog en un tablero Kanban interactivo estructurado en columnas de estado (`Todo`, `In Progress`, `Done`).
 
-* **Sincronización Lean:** El equipo descartó software de administración de tickets que generara fricción administrativa (Jira/Trello), optando por canalizar los refinamientos y ceremonias iterativas a través de hilos técnicos en Discord y revisiones asincrónicas en WhatsApp.
-* **Adaptabilidad (El Pivote Central):** La evidencia definitiva del pensamiento ágil ocurrió durante la revisión del MVP. El equipo documentó en el `Plan_MVP_Pronosticos.md` el retiro de la antigua Épica 5 (pronósticos totalmente libres) e integró la Épica 8 para instaurar límites comerciales y el Pase Premium. Este cambio redireccionó los esfuerzos de desarrollo para implementar integraciones seguras (Stripe/Didit) en lugar de interfaces estériles, entregando un producto funcional, legalmente blindado y viable para producción.
+### 7.1. Estimaciones (T-Shirt Sizing) y Evolución por Sprints
+El esfuerzo de desarrollo se desglosó en tareas técnicas (TSK) asociadas a las Historias de Usuario (HU). Se aplicó la técnica de **T-Shirt Sizing** (XS, S, M, L, XL) para dimensionar la complejidad, orquestando el trabajo a través de 5 Sprints:
+
+* **Sprint 1 (Fundaciones):**
+  * `[TSK-01]` Configuración del repositorio y estructura de carpetas (Talla: `XS`).
+  * `[TSK-02]` Diseño del esquema de Base de Datos para Usuarios y Roles (Talla: `S`).
+* **Sprint 2 (Autenticación):**
+  * `[TSK-04]` Frontend: Maquetado de pantalla de Inicio de Sesión (HU-02) (Talla: `S`).
+  * `[TSK-05]` Frontend: Maquetado del formulario de Registro (HU-01) (Talla: `S`).
+* **Sprint 3 (Datos de Competencia):**
+  * `[TSK-03]` Script de inserción de datos iniciales para el Calendario (Talla: `S`).
+  * `[TSK-06]` Frontend: Vista del Calendario con datos quemados (HU-08) (Talla: `S`).
+  * `[TSK-07]` Backend: Lógica de encriptación de contraseñas (Talla: `S`).
+  * `[TSK-08]` Backend: Endpoint para recuperar contraseña (HU-03) (Talla: `S`).
+  * `[TSK-09]` Frontend: Componente de cierre de sesión (HU-04) (Talla: `XS`).
+  * `[TSK-10]` Base de Datos: Creación de tablas para Pilotos y Escuderías (Talla: `S`).
+  * `[TSK-11]` Frontend: Tarjetas visuales de Pilotos (HU-11) (Talla: `S`).
+  * `[TSK-12]` Frontend: Tablas de clasificación (HU-14) (Talla: `M`).
+* **Sprint 4 (Core Transaccional de Pronósticos):**
+  * `[TSK-13]` Backend: Endpoint para registrar pronóstico (HU-15) (Talla: `M`).
+  * `[TSK-14]` Frontend: Formulario para seleccionar Pole Position (HU-16) (Talla: `S`).
+  * `[TSK-15]` Backend: Validación relacional para evitar pilotos repetidos (HU-17) (Talla: `M`).
+  * `[TSK-16]` Frontend: Pantalla de resumen y confirmación (HU-20) (Talla: `S`).
+* **Sprint 5 (Administración y Cierres):**
+  * `[TSK-17]` Backend: Bloqueo de seguridad para cerrar pronósticos fuera de tiempo (HU-31) (Talla: `M`).
+  * `[TSK-18]` Frontend: Panel administrativo de resultados (HU-30) (Talla: `L`).
+
+### 7.2. Adaptabilidad (El Pivote Central y Nuevos Requisitos)
+La evidencia definitiva del pensamiento ágil ocurrió durante la revisión iterativa del producto, donde el equipo demostró capacidad de adaptación reflejada directamente en el tablero Kanban:
+1. **Pivote Comercial Legal:** Se documentó el retiro de la antigua épica de pronósticos totalmente libres, pivotando hacia un modelo *Freemium* para evadir riesgos normativos. Este cambio redireccionó los esfuerzos para implementar integraciones seguras (Stripe/Didit KYC) antes de lanzar el producto a producción.
+2. **Identificación de Cuellos de Botella:** Durante el Sprint 5, se identificó que el mantenimiento manual del campeonato era insostenible. Se priorizó y ejecutó una historia no contemplada originalmente: **`HU-32 (nueva)` Como administrador quiero sincronizar el calendario, pilotos, escuderías y resultados desde una fuente externa... (Talla: `XL`)**, resultando en la construcción del pipeline ETL automatizado.
 
 ---
 
