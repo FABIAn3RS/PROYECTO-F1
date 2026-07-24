@@ -122,25 +122,26 @@ export default function VerificarCorreo() {
           <p className="text-muted" style={{ fontSize: '0.9rem' }}>
             ¿No recibiste el correo?{' '}
             <button
+              type="button"
               onClick={manejarReenvio}
               disabled={reenviando || contadorResend > 0}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: contadorResend > 0 ? '#888' : '#e10600',
-                textDecoration: contadorResend > 0 ? 'none' : 'underline',
-                cursor: contadorResend > 0 ? 'default' : 'pointer',
-                padding: 0,
-                font: 'inherit',
-                fontWeight: 'bold'
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: contadorResend > 0 ? '#888' : '#e10600',
+                  textDecoration: contadorResend > 0 ? 'none' : 'underline',
+                  cursor: contadorResend > 0 ? 'default' : 'pointer',
+                  padding: 0,
+                  font: 'inherit',
+                  fontWeight: 'bold'
               }}
             >
-              {reenviando
-                ? 'Reenviando...'
-                : contadorResend > 0
-                ? `Reenviar en ${contadorResend}s`
-                : 'Reenviar código'}
-            </button>
+  {reenviando
+    ? 'Reenviando...'
+    : contadorResend > 0
+    ? `Reenviar en ${contadorResend}s`
+    : 'Reenviar código'}
+</button>
           </p>
         </div>
       </Card>
