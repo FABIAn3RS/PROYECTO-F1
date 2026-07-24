@@ -1,3 +1,34 @@
+* **JoseAndresBruh** (24/07/2026 09:42): Actualiza gesti├│n ├ígil y detalla sprints en Documentacion.md
+* **JoseAndresBruh** (24/07/2026 07:16): Revise diagrams and update platform details for F1
+* **Fabi├ín Rezabala** (23/07/2026 20:52): Refactor button styles and structure in VerificarCorreo
+* **Fabi├ín Rezabala** (23/07/2026 20:10): Update sonar-project.properties
+* **Fabi├ín Rezabala** (23/07/2026 18:22): Update build.yml
+* **Marcelo Bravo** (23/07/2026 17:09): Add conditional check for SonarQube scan
+* **Fabi├ín Rezabala** (23/07/2026 16:55): Merge pull request #24 from Xmarcelo05/master
+* **Xmarcelo-05** (22/07/2026 02:22): docs: add SonarQube quality and CI improvements report
+* **Xmarcelo-05** (22/07/2026 02:02): ci: restore clean build workflow configuration
+* **Xmarcelo-05** (22/07/2026 01:57): ci: remove uvicorn standard extra to avoid missing uvloop hashes on Linux
+* **Xmarcelo-05** (22/07/2026 01:44): ci: publish pip and pytest failure logs to ntfy.sh topics
+* **Xmarcelo-05** (22/07/2026 01:34): ci: upload debug logs as a build artifact on failure
+* **Xmarcelo-05** (22/07/2026 01:26): ci: remove temp_env from git tracking and add to gitignore
+* **Xmarcelo-05** (22/07/2026 01:23): ci: add debug logging for pip and pytest failures
+* **Xmarcelo-05** (22/07/2026 01:10): ci: use python 3.11 in build and docker to match requirements hashes
+* **Xmarcelo-05** (22/07/2026 01:04): Add requirements file for backend dependencies
+* **Xmarcelo-05** (22/07/2026 00:54): feat: agregar pruebas unitarias para la funcionalidad de escuder├¡as y pilotos en el backend
+* **Xmarcelo-05** (22/07/2026 00:34): feat: mejorar configuraci├│n de Docker y scripts de instalaci├│n para mayor seguridad y eficiencia
+* **Xmarcelo-05** (21/07/2026 23:45): feat: mejorar pruebas de registro de usuario con datos de rol y contrase├▒a actualizada
+* **Xmarcelo-05** (21/07/2026 23:12): feat: agregar pruebas unitarias para la autenticaci├│n y seguridad en el backend
+* **Xmarcelo-05** (21/07/2026 22:41): ci: exclude config.py and test files from coverage analysis
+* **Xmarcelo-05** (21/07/2026 22:19): fix: agregar variable de entorno POSTGRES_PASSWORD en la configuraci├│n de pruebas de backend
+* **Xmarcelo-05** (21/07/2026 22:11): fix: corregir el comando de ejecuci├│n de pruebas de backend en el flujo de trabajo de construcci├│n
+* **Xmarcelo-05** (21/07/2026 21:59): feat: add frontend and backend test configurations with coverage reports
+* **Xmarcelo-05** (21/07/2026 21:43): Mejora la validaci├│n de la contrase├▒a de la base de datos en la configuraci├│n
+* **Xmarcelo-05** (21/07/2026 21:33): Arreglo de problemas que dej├│ la soluci├│n anterior, en donde solo se burlaron reglas de SONARQUBE pero no se solucionaron errores
+* **Xmarcelo-05** (21/07/2026 21:25): soluci├│n de errores de alta prioridad, de SonarQube
+* **Xmarcelo-05** (21/07/2026 20:34): prueba sonar
+* **Xmarcelo-05** (21/07/2026 20:28): a├▒adir sonar
+* **JoseAndresBruh** (20/07/2026 03:07): Update documentation for clarity and consistency
+* **JoseAndresBruh** (20/07/2026 02:59): Update commit log and Date format update in historialcommits.txt
 * **JoseAndresBruh** (20/07/2026 02:54): Creation of commits log in historialcommits.txt
 * **JoseAndresBruh** (20/07/2026 02:53): Delete historial_commits.txt
 * **JoseAndresBruh** (20/07/2026 02:52): Add files via upload
