@@ -7,20 +7,29 @@
 
 ```mermaid
 C4Context
-    title Contexto del Sistema — Plataforma de Pronósticos Deportivos
+    title Contexto del Sistema — Plataforma de Pronósticos Deportivos F1
+    
     Person(visitante, "Visitante", "Usuario no registrado que desea acceder a la plataforma.")
     Person(usuario, "Usuario Registrado", "Consulta pronósticos, calendario, historial y ranking, y gestiona su suscripción.")
-    Person(admin, "Administrador", "Gestiona Grandes Premios, pilotos, escuderías, resultados oficiales y suscripciones de usuarios.")
-    System(plataforma, "Plataforma de Pronósticos Deportivos", "Aplicación web que genera y muestra pronósticos de carreras de Fórmula 1 basados en estadísticas históricas, con modelo freemium de suscripción.")
-    System_Ext(f1api, "API de Datos F1", "Fuente externa de datos sobre pilotos, escuderías, calendarios y resultados oficiales.")
-    System_Ext(email, "Servicio de Email", "Envío de correos para recuperación de contraseña, notificaciones y confirmaciones de suscripción.")
-    System_Ext(pasarela, "Pasarela de Pago", "Servicio externo (ej. Stripe/PayPal) que procesa el pago de la suscripción premium.")
-    Rel(visitante, plataforma, "Se registra e inicia sesión")
-    Rel(usuario, plataforma, "Consulta pronósticos, calendario, historial, ranking y gestiona su suscripción", "HTTPS")
-    Rel(admin, plataforma, "Gestiona datos del sistema, resultados oficiales y suscripciones de usuarios", "HTTPS")
-    Rel(plataforma, f1api, "Consume datos de pilotos, escuderías y resultados", "REST/JSON")
-    Rel(plataforma, email, "Envía correos de recuperación, notificaciones y confirmación de suscripción", "SMTP")
-    Rel(plataforma, pasarela, "Procesa el pago de la suscripción premium", "REST/JSON")
+    Person(admin, "Administrador", "Gestiona Grandes Premios, pilotos, escuderías, resultados oficiales y suscripciones.")
+    
+    System(plataforma, "Plataforma PronoStats F1", "Aplicación web que genera y muestra pronósticos de carreras de Fórmula 1 basados en estadísticas históricas, con modelo freemium de suscripción.")
+    
+    System_Ext(f1api, "API TheSportsDB", "Fuente externa de datos sobre pilotos, escuderías, calendarios y resultados.")
+    System_Ext(email, "Servicio Resend", "Envío de correos para verificación y recuperación de cuenta.")
+    System_Ext(pasarela, "Stripe API", "Servicio externo que procesa el pago del Pase de Temporada.")
+    System_Ext(didit, "API Didit v3", "Validación biométrica y registral de cédulas de identidad.")
+    System_Ext(firebase, "Firebase Auth", "Servicio de verificación telefónica por SMS (2FA).")
+    
+    Rel(visitante, plataforma, "Consulta calendario y predicciones públicas")
+    Rel(usuario, plataforma, "Completa KYC, compra Pase de Temporada y registra pronósticos", "HTTPS")
+    Rel(admin, plataforma, "Mantiene catálogos, asienta resultados y ejecuta ETL", "HTTPS")
+    
+    Rel(plataforma, f1api, "Consume eventos y resultados de carreras", "REST/JSON")
+    Rel(plataforma, email, "Envía correos de verificación y tokens", "SMTP/REST")
+    Rel(plataforma, pasarela, "Genera Checkout Sessions y recibe Webhooks", "REST/JSON")
+    Rel(plataforma, didit, "Redirige a flujo KYC y valida Webhook HMAC-SHA256", "REST/JSON")
+    Rel(plataforma, firebase, "Valida códigos OTP de teléfono", "REST/JSON")
 ```
 
 ---
@@ -29,30 +38,36 @@ C4Context
 
 ```mermaid
 C4Container
-    title Contenedores del Sistema — Plataforma de Pronósticos Deportivos
-    Person(usuario, "Usuario Registrado", "Consulta pronósticos y gestiona su suscripción desde el navegador.")
-    Person(admin, "Administrador", "Gestiona el sistema y las suscripciones.")
-    System_Boundary(plataforma, "Plataforma de Pronósticos Deportivos") {
-        Container(webapp, "Aplicación Web", "React + Vite (TypeScript)", "Interfaz principal para usuarios: calendario, consulta de pronósticos, historial, ranking y gestión de suscripción. Organizada por features alineadas a las épicas EP-01 a EP-07.")
-        Container(adminpanel, "Panel de Administración", "React (SPA)", "Gestión de GPs, pilotos, escuderías, resultados oficiales y administración de suscripciones de usuarios. Corresponde a EP-06.")
-        Container(api, "API Backend", "FastAPI (Python)", "Lógica de negocio: autenticación, generación de pronósticos, puntuación, rankings y control de suscripciones/límites de uso. Organizada en módulos por épica (modules/auth, modules/pronosticos, modules/suscripciones, etc.). Expone endpoints REST.")
-        Container(db, "Base de Datos", "PostgreSQL", "Almacena usuarios, pronósticos, resultados, pilotos, escuderías y suscripciones.")
-        Container(cache, "Caché", "Redis", "Almacena sesiones activas, datos de clasificación frecuentes y el conteo de consultas gratuitas por usuario.")
-        Container(auth, "Servicio de Autenticación", "JWT (python-jose)", "Gestiona tokens de acceso y flujo de recuperación de contraseña.")
+    title Contenedores del Sistema — Plataforma de Pronósticos Deportivos F1
+    
+    Person(usuario, "Usuario Registrado", "Interactúa con la plataforma desde el navegador.")
+    Person(admin, "Administrador", "Gestiona el sistema desde el panel administrativo protegido.")
+
+    System_Boundary(plataforma, "Límite de la Plataforma PronoStats") {
+        Container(ngx, "Proxy Reverso / Servidor Web", "Nginx 1.27 Alpine", "Sirve archivos estáticos SPA y maneja enrutamiento (SPA Fallback).")
+        Container(web, "Aplicación Web Cliente", "React 19 + TypeScript + Vite", "Interfaz principal para usuarios: calendario, pronósticos, historial, ranking y seguridad KYC.")
+        Container(api, "API Backend RESTful", "FastAPI / Python 3.12", "Núcleo de negocio (DDD-Lite), validaciones de seguridad, pasarela Stripe y motor algorítmico.")
+        ContainerDb(db, "Base de Datos Relacional", "PostgreSQL 16", "Persistencia segura de usuarios, pronósticos, resultados, pilotos y escuderías.")
     }
-    System_Ext(f1api, "API de Datos F1", "Datos externos de Fórmula 1.")
-    System_Ext(email, "Servicio de Email", "Envío de notificaciones.")
-    System_Ext(pasarela, "Pasarela de Pago", "Procesa el pago de la suscripción premium (ej. Stripe/PayPal).")
-    Rel(usuario, webapp, "Usa", "HTTPS")
-    Rel(admin, adminpanel, "Administra", "HTTPS")
-    Rel(webapp, api, "Llamadas a la API", "REST/JSON")
-    Rel(adminpanel, api, "Llamadas a la API", "REST/JSON")
-    Rel(api, db, "Lee y escribe datos", "SQL / SQLAlchemy")
-    Rel(api, cache, "Lee y escribe sesiones/clasificación/límites de uso", "Redis Protocol")
-    Rel(api, auth, "Valida y genera tokens JWT")
-    Rel(api, f1api, "Obtiene datos de pilotos y resultados", "REST/JSON")
-    Rel(api, pasarela, "Procesa el pago de la suscripción", "REST/JSON")
-    Rel(auth, email, "Solicita envío de correo", "SMTP")
+
+    System_Ext(didit, "API Didit v3", "KYC Biométrico")
+    System_Ext(stripe, "Stripe API", "Checkout / Pase Temporada")
+    System_Ext(resend, "Resend API", "Email Delivery")
+    System_Ext(tsdb, "TheSportsDB API", "Fuente Deportiva F1")
+    System_Ext(firebase, "Firebase Auth", "SMS OTP Service")
+
+    Rel(usuario, ngx, "Visita y opera la plataforma", "HTTPS")
+    Rel(admin, ngx, "Accede al panel de administración", "HTTPS")
+
+    Rel(ngx, web, "Sirve archivos estáticos", "HTTPS")
+    Rel(web, api, "Peticiones de negocio", "REST/JSON + JWT")
+
+    Rel(api, db, "Lee y escribe datos", "SQLAlchemy ORM")
+    Rel(api, didit, "Firma Webhook HMAC-SHA256", "REST/JSON")
+    Rel(api, stripe, "Crea Checkout Session $20 USD", "REST/JSON")
+    Rel(api, resend, "Envío asíncrono de emails", "REST/JSON")
+    Rel(api, tsdb, "Pipeline ETL Synchronization", "REST/JSON")
+    Rel(web, firebase, "Solicita verificación SMS 2FA", "REST/JSON")
 ```
 
 ---
@@ -226,11 +241,11 @@ proyecto_f1_frontend/
 | EP-01 | `modules/auth`                             | `features/auth`          |
 | EP-02 | `modules/usuarios`                         | `features/perfil`        |
 | EP-03 | `modules/calendario`                       | `features/calendario`    |
-| EP-04 | `modules/pilotos` + `modules/escuderias`   | `features/competencia`   |
+| EP-04 | `modules/pilotos, escuderias, predicciones`| `features/competencia, predicciones`   |
 | EP-05 | `modules/pronosticos`                      | `features/pronosticos`   |
 | EP-06 | `modules/resultados`                       | `features/resultados`    |
-| EP-07 | consultas en `usuarios` + `resultados`     | `features/historial`     |
-| EP-08 | `modules/admin`                            | `features/admin`         |
+| EP-07 | `modules/acceso ` (Pase/Stripe)            | `features/perfil` (Checkout y Bloqueos)    |
+| EP-08 | `modules/admin`  (CRUD y ETL)              | `features/admin, thesportsdb`         |
 
 ---
 
@@ -238,12 +253,11 @@ proyecto_f1_frontend/
 
 | Contenedor        | Responsabilidad principal                                                        |
 |-------------------|----------------------------------------------------------------------------------|
-| **Web App**       | UI para usuarios: pronósticos, calendario, historial, ranking (React + Vite)     |
+| **Web App (React)**       | UI para usuarios: pronósticos, calendario, historial, ranking (React + Vite)     |
 | **Admin Panel**   | CRUD de GPs, pilotos, escuderías; cierre de pronósticos; resultados (React SPA)  |
 | **API Backend**   | Toda la lógica de negocio; punto único de acceso a datos (FastAPI)               |
 | **Base de Datos** | Persistencia de usuarios, pronósticos, resultados y estadísticas (PostgreSQL)    |
-| **Caché (Redis)** | Sesiones JWT y clasificaciones de alta demanda                                   |
-| **Auth Service**  | Emisión/validación de JWT y flujo de recuperación de contraseña (python-jose)    |
+| **Integraciones** | Dependencia estricta de servicios SaaS (Didit, Resend, Firebase, Stripe) para escalar. |
 
 ---
 
@@ -270,8 +284,6 @@ classDiagram
         +String kyc_estado
         +UUID gp_gratis_id
         +actualizarPerfil()
-        +seleccionarPilotoFavorito(Piloto piloto)
-        +seleccionarEscuderiaFavorita(Escuderia escuderia)
         +realizarPronostico(GranPremio gp)
         +comprarPaseTemporada()
     }
@@ -296,10 +308,8 @@ classDiagram
         +UUID id
         +String nombre
         +String circuito
-        +String pais
         +int temporada
         +int ronda
-        +Date fecha_inicio
         +Date fecha_carrera
         +boolean finalizado
     }
@@ -313,7 +323,6 @@ classDiagram
 
     class Pronostico {
         +UUID id
-        +Date fechaRegistro
         +boolean confirmado
         +int puntos_obtenidos
         +validarCierrePeriodo()
@@ -329,14 +338,12 @@ classDiagram
     class Piloto {
         +UUID id
         +String nombre
-        +String nacionalidad
         +int puntos_temporada
     }
 
     class Escuderia {
         +UUID id
         +String nombre
-        +String color
         +int puntos_temporada
     }
 
@@ -344,24 +351,18 @@ classDiagram
     Usuario <|-- UsuarioRegistrado
     Usuario <|-- Administrador
 
-    %% Relaciones de Usuario Registrado
+    %% Relaciones Principales
     UsuarioRegistrado "1" --> "0..1" PaseTemporada : posee
     UsuarioRegistrado "1" --> "0..*" Pronostico : registra
-    UsuarioRegistrado "1" --> "0..1" Piloto : prefiere
-    UsuarioRegistrado "1" --> "0..1" Escuderia : prefiere
     UsuarioRegistrado "1" --> "0..1" GranPremio : tiene pronóstico gratis
 
-    %% Relaciones del Administrador
-    Administrador "1" --> "0..*" GranPremio : gestiona
-    Administrador "1" --> "0..*" ResultadoOficial : publica
-
-    %% Estructura de Carreras y Resultados
+    %% Estructura de Carreras
     GranPremio "1" *-- "0..1" ResultadoOficial : finaliza con
     GranPremio "1" *-- "0..1" PrediccionAlgoritmica : procesa
     GranPremio "1" --> "0..*" Pronostico : recibe
     Escuderia "1" o-- "1..*" Piloto : posee
 
-    %% Dependencias Físicas (Pronóstico vs Algoritmo vs Realidad)
+    %% Dependencias Físicas
     Pronostico "1" --> "5" Piloto : predice P1/P2/P3/Pole/VR
     ResultadoOficial "1" --> "5" Piloto : consagra P1/P2/P3/Pole/VR
     PrediccionAlgoritmica "1" --> "3" Piloto : sugiere Podio
@@ -370,37 +371,67 @@ classDiagram
 
 ---
 
-## Plan de Acción: Verificación de Seguridad y KYC (Costo Cero)
+## Plan de Acción e Implementación: Verificación de Seguridad, KYC y Flujo de Pagos (Costo Cero)
 
-Para habilitar el flujo de depósitos y garantizar la autenticidad de los usuarios sin incurrir en costos elevados durante el prototipo y lanzamiento inicial, se implementará el siguiente plan con tecnologías 100% gratuitas en sus niveles iniciales:
+Para habilitar la comercialización del Pase de Temporada ($20.00 USD) y garantizar la autenticidad de los usuarios sin incurrir en costos operativos durante las fases de prototipo y producción inicial, se diseñó e implementó un flujo de seguridad multicapa de tres niveles (3FA/KYC) utilizando servicios en la nube con capas gratuitas permanentes. 
 
-### 1. Verificación de Correo (Registro)
-* **Herramienta:** **Resend** (Plan Free — 3,000 correos/mes gratis).
-* **Propósito:** Validar que la dirección de correo proporcionada al registrarse es real antes de permitir acceso completo a la aplicación.
-* **Implementación:**
-  1. Durante el registro (`POST /auth/register`), el backend genera un código aleatorio de 6 dígitos con fecha de expiración (15 minutos) en la tabla `codigos_verificacion`.
-  2. El backend (FastAPI) envía un email con el código utilizando la API de **Resend**.
-  3. El frontend (React) muestra una pantalla de bloqueo de verificación tras el registro donde el usuario ingresa el código.
-  4. Al ingresar el código correcto, el backend cambia `correo_verificado = True` y permite el inicio de sesión ordinario.
+Este esquema actúa como un perímetro de seguridad estricto que previene el uso de bots, evita la creación de múltiples cuentas para explotar la función de pronóstico gratuito (`gp_gratis_id`), garantiza el cumplimiento normativo de mayoría de edad (18+) y protege la pasarela de pagos contra fraudes o contrargos.
 
-### 2. Verificación Telefónica (Perfil)
-* **Herramienta:** **Firebase Phone Auth** (Spark Plan — 10,000 SMS/mes gratis globales).
-* **Propósito:** Reemplazar el costoso e inestable AWS SNS para validar el número de teléfono del usuario antes de habilitar la opción de depósito.
-* **Implementación:**
-  1. En la página de perfil, el usuario ingresa su teléfono.
-  2. El frontend (React) utiliza la librería de Firebase Web SDK para inicializar el captcha invisible y enviar el código SMS directamente al dispositivo móvil.
-  3. Firebase se encarga de la entrega de red del SMS sin costo.
-  4. El usuario introduce el código recibido en el frontend; el frontend lo valida con Firebase y recibe un token de confirmación de éxito.
-  5. El frontend envía este token de verificación al backend (`POST /users/me/verificar-telefono`) para almacenar `telefono_verificado = True` y guardar de forma segura el número en la base de datos.
+---
 
-### 3. Verificación de Identidad (KYC - Cédula y Selfie)
-* **Herramienta:** **Didit** (Plan Sandbox/Free — 500 verificaciones KYC/mes gratis para siempre).
-* **Propósito:** Reemplazar plataformas empresariales de pago (como Onfido o Veriff) para autenticar la identidad del usuario mediante fotos de su cédula (frente y dorso) y una selfie biométrica (liveness test).
-* **Implementación:**
-  1. Si el usuario intenta acceder a la sección de depósito y no tiene su identidad verificada, se le redirige automáticamente a su Perfil con un aviso de advertencia.
-  2. El frontend solicita al backend un token de sesión de verificación (`POST /users/me/kyc/session`).
-  3. El backend (FastAPI) realiza una petición autenticada a la API de **Didit** para iniciar una sesión y se la entrega al frontend.
-  4. El frontend renderiza el SDK de Didit (`@didit-protocol/sdk-web`) para guiar al usuario en la captura de su cédula y su rostro.
-  5. Una vez completado en la UI, Didit procesa la validez del documento y la foto en segundo plano y notifica el veredicto final mediante un Webhook (`POST /webhooks/didit`) hacia nuestro backend, el cual actualiza el estado en la base de datos a `kyc_estado = 'aprobado'`.
-  6. Una vez aprobados el teléfono y el KYC de Didit, el usuario puede acceder a la sección de depósitos.
+### 1. Verificación de Correo Electrónico (Registro de Usuario)
+
+* **Servicio Utilizado:** **Resend API** (Plan Developer — 3,000 correos transaccionales/mes gratis).
+* **Estado del Módulo:** **✅ Implementado y Funcional en Backend y Frontend**.
+* **Propósito de Ingeniería:** Validar que la dirección de correo proporcionada en el formulario de registro (`HU-01`) pertenece a un usuario real y evitar la proliferación de cuentas spammers o correos temporales efímeros.
+* **Arquitectura del Flujo Técnico:**
+  1. **Solicitud de Registro:** Cuando el usuario completa el formulario en la vista `Registro.tsx`, se dispara una petición `POST /auth/register` enviando las credenciales.
+  2. **Generación de Token Efímero:** El backend (FastAPI) crea un registro en la tabla `codigos_verificacion` con un código aleatorio de 6 dígitos numéricos, asociándole un timestamp de expiración a los 15 minutos (`expira_en = NOW() + 15 min`).
+  3. **Despacho Asíncrono:** El submódulo `app/core/email.py` compila una plantilla HTML responsiva e invoca la API de **Resend** mediante HTTP asíncrono para entregar el código en la bandeja de entrada del usuario.
+  4. **Pantalla de Bloqueo:** El cliente React redirige automáticamente al usuario a la pantalla `/verificar-correo`, restringiendo la navegación hacia rutas protegidas (`<PrivateRoute>`).
+  5. **Confirmación y Activación:** Al ingresar los 6 dígitos, el frontend ejecuta `POST /auth/verify-email`. El backend verifica la validez del código y que no haya expirado; al ser correcto, actualiza `correo_verificado = True` en la tabla `usuarios` y marca el código como `usado = True`.
+
+---
+
+### 2. Verificación Telefónica y 2FA por SMS (Gestión de Perfil)
+
+* **Servicio Utilizado:** **Firebase Phone Auth** (Spark Plan — 10,000 SMS globales/mes gratis).
+* **Estado del Módulo:** **✅ Implementado y Funcional en Backend y Frontend**.
+* **Propósito de Ingeniería:** Establecer un mecanismo de autenticación de doble factor (2FA) que vincule un número de teléfono móvil físico único a cada cuenta registrada en la base de datos PostgreSQL.
+* **Arquitectura del Flujo Técnico:**
+  1. **Inicio del Flujo:** Desde la vista `/perfil`, el usuario ingresa su número telefónico incluyendo el código de país en formato internacional E.164 (ej. `+593991234567`).
+  2. **Verificación de Boti-captcha:** El cliente React utiliza el SDK de Firebase Web para renderizar un reCAPTCHA invisible, previniendo el ataque por fuerza bruta sobre la API de SMS.
+  3. **Envío del Código OTP:** Firebase despacha un SMS con un código OTP de 6 dígitos directamente al dispositivo móvil del usuario sin generar costos para la infraestructura de la plataforma.
+  4. **Validación del Cliente:** El usuario ingresa el código en el modal de verificación de la interfaz; la librería de Firebase valida el código contra los servidores de Google y retorna un `idToken` de confirmación firmado criptográficamente.
+  5. **Persistencia en Servidor:** El frontend envía el token de Firebase al backend mediante la ruta `POST /users/me/verificar-telefono`. El backend verifica el token de Firebase, guarda el número en la columna `telefono` y conmuta el booleano `telefono_verificado = True` en PostgreSQL.
+
+---
+
+### 3. Verificación de Identidad Biométrica Registral - KYC (Didit API v3)
+
+* **Servicio Utilizado:** **Didit v3 API** (Plan Sandbox/Free — 500 verificaciones registrales/mes gratis).
+* **Estado del Módulo:** **✅ Implementado y Funcional en Backend**.
+* **Propósito de Ingeniería:** Autenticar la identidad legal del usuario contrastando las fotografías de su cédula de identidad ecuatoriana y una selfie biométrica con prueba de vida (*liveness test*), garantizando el cumplimiento de las normativas de la República del Ecuador sobre mayoría de edad y prevención de suplantación de identidad.
+* **Arquitectura del Flujo Técnico:**
+  1. **Intercepción de Estado:** En la página `/perfil`, el componente evalúa los estados de seguridad del usuario. Si `kyc_estado != 'aprobado'`, se inyecta un estado reactivo que deshabilita el botón de compra del Pase de Temporada y muestra la insignia `KYC Requerido`.
+  2. **Creación de Sesión Didit:** Al hacer clic en "Verificar Identidad", el cliente solicita la apertura de una sesión enviando una petición `POST /users/me/kyc/session`.
+  3. **Orquestación Backend:** El script `app/core/didit.py` realiza un request autenticado contra la API de Didit v3, creando una sesión con el vendor interno y retornando la URL del flujo seguro. El backend registra temporalmente el estado como `kyc_estado = 'pendiente'`.
+  4. **Captura Biométrica:** El usuario es guiado por la interfaz segura de Didit para fotografiar el anverso y reverso de su cédula de identidad y realizar la prueba de vida facial.
+  5. **Notificación Asíncrona (Webhook):** Una vez que Didit valida el documento y la biometría, envía un webhook con la decisión final hacia el endpoint `/users/webhooks/didit`.
+  6. **Validación Criptográfica HMAC-SHA256:** Para evitar ataques de suplantación o manipulación de peticiones HTTP, el módulo `didit.py` intercepta la cabecera `X-Signature-V2`. Efectúa una ingeniería inversa truncando valores flotantes a enteros, genera un JSON canónico y calcula el hash **HMAC-SHA256** empleando la clave secreta compartida. Asimismo, rechaza cualquier petición con un timestamp con más de 300 segundos de diferencia para impedir ataques de repetición (*Replay Attacks*).
+  7. **Aprobación de la Cuenta:** Si el hash coincide y el veredicto de Didit es exitoso, la base de datos actualiza automáticamente la columna `kyc_estado = 'aprobado'`.
+
+---
+
+### 4. Desbloqueo del Checkout Financiero (Stripe API)
+
+* **Servicio Utilizado:** **Stripe Checkout SDK** (Modo Sandbox / Producción).
+* **Estado del Módulo:** **✅ Implementado y Funcional en Backend y Frontend**.
+* **Propósito de Ingeniería:** Garantizar que únicamente los usuarios con su perfil 100% verificado (Correo + Teléfono + KYC Aprobado) puedan acceder a la pasarela de pagos para adquirir su suscripción del Pase de Temporada ($20.00 USD / año).
+* **Arquitectura del Flujo Técnico:**
+  1. **Evaluación de Barreras de Seguridad:** El backend (`app/modules/acceso/dependencies.py`) expone la dependencia `verificar_requisitos_pase`. Si un usuario intenta invocar la creación de un checkout sin cumplir `correo_verificado = True`, `telefono_verificado = True` y `kyc_estado == 'aprobado'`, la API responde inmediatamente con un código de error `403 Forbidden`.
+  2. **Generación de Sesión de Pago:** Al superar todas las barreras, la vista `/perfil` habilita el botón "Comprar Pase de Temporada con Stripe". El cliente invoca `POST /acceso/checkout`.
+  3. **Procesamiento en Stripe:** El backend se comunica con la API de Stripe para generar una `checkout.session`, pasando el ID del usuario como metadato, y retorna la URL de redirección segura.
+  4. **Confirmación y Asignación de Licencia:** Tras completar el pago, Stripe emite el webhook `checkout.session.completed`. El servidor valida la transacción y registra una nueva fila en la tabla `pases_temporada` con `estado = 'activo'`, calculando la fecha de expiración exactamente a un año calendario (`fecha_expiracion = NOW() + 1 year`).
+  5. **Acceso Ilimitado:** El usuario queda habilitado para registrar pronósticos en todas las carreras del campeonato sin restricciones.
 
